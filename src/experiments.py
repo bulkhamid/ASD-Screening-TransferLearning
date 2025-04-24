@@ -10,12 +10,15 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, models
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import (
+    roc_auc_score, accuracy_score, precision_score,
+    recall_score, f1_score
+)
 import wandb
 
 # 1. Configuration
 CONFIG = {
-    "data_path": "C:\\Users\\zhams\\HWs\\Autsim",             # Base path containing 'Positive_Trimmed' & 'Negative_Trimmed'
+    "data_path": "C:\\Users\\zhams\\HWs\\Autsim",  # Base path with 'Positive_Trimmed' & 'Negative_Trimmed'
     "target_size": (112, 112),
     "max_frames": 60,
     "batch_size": 8,
@@ -24,15 +27,16 @@ CONFIG = {
     "lr_head": 1e-3,
     "lr_finetune": 1e-4,
     "weight_decay": 1e-5,
-    "test_size": 0.4,              # 60% train, 40% temp -> split temp into 20% val / 20% test
+    "val_size": 0.1,    # 10% of total for validation
+    "test_size": 0.2,   # 20% of total for testing
     "random_seed": 42
 }
 
-# 2. Initialize Weights & Biases
+# 2. Initialize W&B
 wandb.init(project="ASD-video-screening", config=CONFIG)
 config = wandb.config
 
-# 3. Video Dataset Definition
+# 3. Dataset
 class VideoDataset(Dataset):
     def __init__(self, video_paths, labels, transform=None):
         self.video_paths = video_paths
@@ -57,36 +61,61 @@ class VideoDataset(Dataset):
             frames.append(frame)
         cap.release()
         
-        # Pad if fewer frames
         if len(frames) < config.max_frames:
-            pad_frame = frames[-1] if frames else np.zeros((*config.target_size, 3), np.uint8)
-            frames += [pad_frame] * (config.max_frames - len(frames))
+            pad = frames[-1] if frames else np.zeros((*config.target_size, 3), np.uint8)
+            frames += [pad] * (config.max_frames - len(frames))
         
         video_np = np.array(frames, dtype=np.float32) / 255.0
         video = torch.from_numpy(video_np).permute(3, 0, 1, 2)  # (C, T, H, W)
-        
         if self.transform:
             video = self.transform(video)
-        
         return video, torch.tensor(label, dtype=torch.float32)
 
-# 4. Model Definition: Pretrained 3D ResNet
+# 4. Model
 class AutismDetectionModel(nn.Module):
     def __init__(self):
         super().__init__()
         backbone = models.video.r3d_18(pretrained=True)
-        # Freeze all layers initially
-        for param in backbone.parameters():
-            param.requires_grad = False
-        # Replace final layer
+        for p in backbone.parameters():
+            p.requires_grad = False
         backbone.fc = nn.Linear(backbone.fc.in_features, 1)
         self.backbone = backbone
 
     def forward(self, x):
-        # x shape: (B, C, T, H, W)
         return torch.sigmoid(self.backbone(x).squeeze())
 
-# 5. Utility: train one epoch
+# 5. Metrics helper
+def evaluate_metrics(model, loader, criterion, device):
+    model.eval()
+    all_labels, all_probs, all_preds = [], [], []
+    total_loss = 0.0
+    with torch.no_grad():
+        for videos, labels in loader:
+            videos, labels = videos.to(device), labels.to(device)
+            outputs = model(videos)
+            loss = criterion(outputs, labels)
+            total_loss += loss.item() * videos.size(0)
+            probs = outputs.cpu().numpy()
+            preds = (probs >= 0.5).astype(int)
+            all_labels.extend(labels.cpu().numpy())
+            all_probs.extend(probs)
+            all_preds.extend(preds)
+    avg_loss = total_loss / len(loader.dataset)
+    auc = roc_auc_score(all_labels, all_probs)
+    acc = accuracy_score(all_labels, all_preds)
+    prec = precision_score(all_labels, all_preds, zero_division=0)
+    rec = recall_score(all_labels, all_preds, zero_division=0)
+    f1 = f1_score(all_labels, all_preds, zero_division=0)
+    return {
+        "loss": avg_loss,
+        "auc": auc,
+        "accuracy": acc,
+        "precision": prec,
+        "recall": rec,
+        "f1_score": f1
+    }
+
+# 6. Training loop
 def train_epoch(model, loader, criterion, optimizer, device):
     model.train()
     running_loss = 0.0
@@ -100,101 +129,85 @@ def train_epoch(model, loader, criterion, optimizer, device):
         running_loss += loss.item() * videos.size(0)
     return running_loss / len(loader.dataset)
 
-# 6. Utility: evaluate
-def evaluate(model, loader, device):
-    model.eval()
-    all_labels, all_preds = [], []
-    with torch.no_grad():
-        for videos, labels in loader:
-            videos = videos.to(device)
-            preds = model(videos).cpu().numpy()
-            all_preds.extend(preds)
-            all_labels.extend(labels.numpy())
-    auc = roc_auc_score(all_labels, all_preds)
-    return auc
-
-# 7. Main Routine
+# 7. Main
 if __name__ == "__main__":
-    # Gather video paths and labels
-    pos_dir = os.path.join(config.data_path, 'Positive_Trimmed')
-    neg_dir = os.path.join(config.data_path, 'Negative_Trimmed')
-    video_paths, labels = [], []
-    for p in os.listdir(pos_dir):
-        if p.endswith(('.mp4','.webm','.avi')):
-            video_paths.append(os.path.join(pos_dir, p)); labels.append(1)
-    for n in os.listdir(neg_dir):
-        if n.endswith(('.mp4','.webm','.avi')):
-            video_paths.append(os.path.join(neg_dir, n)); labels.append(0)
+    # Gather files
+    pos_dir = os.path.join(config.data_path, "Positive_Trimmed")
+    neg_dir = os.path.join(config.data_path, "Negative_Trimmed")
+    paths, labels = [], []
+    for d, lab in [(pos_dir,1),(neg_dir,0)]:
+        for fn in os.listdir(d):
+            if fn.lower().endswith(('.mp4','.webm','.avi')):
+                paths.append(os.path.join(d,fn))
+                labels.append(lab)
 
-    # Split 60/20/20
+    # 70/10/20 split
     train_paths, temp_paths, train_labels, temp_labels = train_test_split(
-        video_paths, labels,
-        test_size=config.test_size,
+        paths, labels,
+        test_size=(config.val_size+config.test_size),
         stratify=labels,
         random_state=config.random_seed
     )
+    # From temp 30%, allocate 10% val (i.e. 1/3 of temp) and 20% test (2/3 of temp)
+    val_ratio = config.val_size / (config.val_size + config.test_size)
     val_paths, test_paths, val_labels, test_labels = train_test_split(
         temp_paths, temp_labels,
-        test_size=0.5,
+        test_size=(1 - val_ratio),
         stratify=temp_labels,
         random_state=config.random_seed
     )
 
-    # Data transforms
-    frame_transforms = transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.ColorJitter(0.2,0.2,0.2,0.1),
-        transforms.RandomHorizontalFlip(0.5),
-        transforms.RandomRotation(10),
-        transforms.ToTensor(),
-    ])
-    video_transform = lambda vid: vid  # no-op; augment inside dataset if desired
-
     # DataLoaders
-    train_ds = VideoDataset(train_paths, train_labels, transform=video_transform)
+    train_ds = VideoDataset(train_paths, train_labels, transform=None)
     val_ds   = VideoDataset(val_paths,   val_labels,   transform=None)
     test_ds  = VideoDataset(test_paths,  test_labels,  transform=None)
-    train_loader = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True, num_workers=0)
-    val_loader   = DataLoader(val_ds,   batch_size=config.batch_size, shuffle=False, num_workers=0)
-    test_loader  = DataLoader(test_ds,  batch_size=config.batch_size, shuffle=False, num_workers=0)
+    train_loader = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True)
+    val_loader   = DataLoader(val_ds,   batch_size=config.batch_size, shuffle=False)
+    test_loader  = DataLoader(test_ds,  batch_size=config.batch_size, shuffle=False)
 
-    # Model, criterion, device
+    # Setup
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = AutismDetectionModel().to(device)
     criterion = nn.BCELoss()
 
-    # Stage 1: Train head only
-    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()),
-                           lr=config.lr_head, weight_decay=config.weight_decay)
     wandb.watch(model, log="all", log_freq=10)
+
+    # Stage 1: head only
+    optimizer = optim.Adam(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=config.lr_head, weight_decay=config.weight_decay
+    )
     for epoch in range(config.epochs_head):
-        train_loss = train_epoch(model, train_loader, criterion, optimizer, device)
-        val_auc = evaluate(model, val_loader, device)
-        wandb.log({"stage": "head", "epoch": epoch+1,
-                   "train_loss": train_loss, "val_auc": val_auc})
-        print(f"[Head] Epoch {epoch+1}/{config.epochs_head} — Loss: {train_loss:.4f}, Val AUC: {val_auc:.4f}")
+        train_epoch(model, train_loader, criterion, optimizer, device)
+        train_metrics = evaluate_metrics(model, train_loader, criterion, device)
+        val_metrics   = evaluate_metrics(model, val_loader,   criterion, device)
+        wandb.log({f"head/train_{k}":v for k,v in train_metrics.items()})
+        wandb.log({f"head/val_{k}":v   for k,v in val_metrics.items()})
+        print(f"[Head] Epoch {epoch+1}: Train Loss {train_metrics['loss']:.4f}, Val AUC {val_metrics['auc']:.4f}")
 
-    # Stage 2: Unfreeze last block & fine-tune
+    # Stage 2: unfreeze last block
     for name, param in model.backbone.named_parameters():
-        if "layer4" in name or "fc" in name:
-            param.requires_grad = True
-        else:
-            param.requires_grad = False
-    optimizer = optim.Adam(filter(lambda p: p.requires_grad, model.parameters()),
-                           lr=config.lr_finetune, weight_decay=config.weight_decay)
+        param.requires_grad = ("layer4" in name) or ("fc" in name)
+    optimizer = optim.Adam(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=config.lr_finetune, weight_decay=config.weight_decay
+    )
     for epoch in range(config.epochs_finetune):
-        train_loss = train_epoch(model, train_loader, criterion, optimizer, device)
-        val_auc = evaluate(model, val_loader, device)
-        wandb.log({"stage": "finetune", "epoch": epoch+1,
-                   "train_loss": train_loss, "val_auc": val_auc})
-        print(f"[Finetune] Epoch {epoch+1}/{config.epochs_finetune} — Loss: {train_loss:.4f}, Val AUC: {val_auc:.4f}")
+        train_epoch(model, train_loader, criterion, optimizer, device)
+        train_metrics = evaluate_metrics(model, train_loader, criterion, device)
+        val_metrics   = evaluate_metrics(model, val_loader,   criterion, device)
+        wandb.log({f"finetune/train_{k}":v for k,v in train_metrics.items()})
+        wandb.log({f"finetune/val_{k}":v   for k,v in val_metrics.items()})
+        print(f"[Finetune] Epoch {epoch+1}: Train Loss {train_metrics['loss']:.4f}, Val AUC {val_metrics['auc']:.4f}")
 
-    # Final evaluation on test
-    test_auc = evaluate(model, test_loader, device)
-    print(f"Test AUC: {test_auc:.4f}")
-    wandb.log({"test_auc": test_auc})
+    # Final test eval
+    test_metrics = evaluate_metrics(model, test_loader, criterion, device)
+    wandb.log({f"test_{k}":v for k,v in test_metrics.items()})
+    print("Test metrics:", test_metrics)
 
-    # Save model
+    # Save
     torch.save(model.state_dict(), "best_model.pth")
     wandb.save("best_model.pth")
 
+    wandb.finish()
+    print("Training complete. Model saved and W&B run finished.")
