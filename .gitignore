@@ -15,5 +15,7 @@ dist/
 .vscode/
 .idea/
 
+# wandb files
+.wandb
 
-.wandb/
+.asd/
