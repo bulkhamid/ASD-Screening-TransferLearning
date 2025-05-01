@@ -26,4 +26,4 @@ class Simple3DLSTM(nn.Module):
         f = f.permute(0,2,1,3,4)          # (B,T,128,H/8,W/8)
         f = f.reshape(B, f.size(1), -1)   # (B,T,feat_dim)
         out,_ = self.lstm(f)              # (B,T,64)
-        return self.head(out[:,-1,:]).squeeze()
+        return self.head(out[:,-1,:]).view(-1)  

@@ -12,4 +12,4 @@ class PretrainedR3D(nn.Module):
         self.net = backbone
 
     def forward(self, x):
-        return torch.sigmoid(self.net(x).squeeze())
+        return torch.sigmoid(self.net(x)).view(-1)

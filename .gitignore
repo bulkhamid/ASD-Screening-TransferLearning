@@ -26,3 +26,6 @@ checkpoints/
 src/models/checkpoints/
 src/models/simple_model/*.pth
 src/models/results/
+
+*.pth
+*.pt
