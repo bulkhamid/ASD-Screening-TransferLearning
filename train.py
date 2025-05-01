@@ -26,7 +26,7 @@ if __name__=="__main__":
     p.add_argument("--target_size",type=int,   nargs=2, default=[112,112])
     p.add_argument("--batch_size", type=int,   default=8)
     p.add_argument("--epochs",     type=int,   default=50)
-    p.add_argument("--lr",         type=float, default=1e-4)
+    p.add_argument("--lr",         type=float, default=1e-5)
     p.add_argument("--patience",   type=int,   default=5)
     p.add_argument("--workers",    type=int,   default=4)
     p.add_argument("--device",     type=str,   default="cuda" if torch.cuda.is_available() else "cpu")
