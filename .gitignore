@@ -20,13 +20,5 @@ wandb/
 
 .asd/
 
-# at the root of your repo
-/src/models/checkpoints/**/*.pth
-/src/models/simple_model/*.pth
-/src/models/checkpoints
-/src/models/results/
+checkpoints/
 
-# checkpoints and large artifacts
-/src/models/checkpoints/
-/src/models/simple_model/*.pth
-/src/models/results/
