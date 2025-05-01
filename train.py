@@ -5,11 +5,11 @@ import wandb
 from sklearn.model_selection import train_test_split
 
 from data.dataloader       import make_dataloaders
-from models.simple3dlstm   import Simple3DLSTM
-from models.pretrained_r3d import PretrainedR3D
-from utils.metrics         import compute_metrics
-from utils.earlystop       import EarlyStopper
-from utils.wandb_logger    import log_epoch
+from src.models.simple3dlstm   import Simple3DLSTM
+from src.models.pretrained_r3d import PretrainedR3D
+from src.utils.metrics         import compute_metrics
+from src.utils.earlystop       import EarlyStopper
+from src.utils.wandb_logger    import log_epoch
 
 def get_model(name, cfg):
     if name=="simple3dlstm":
@@ -21,7 +21,7 @@ def get_model(name, cfg):
 if __name__=="__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--model",      choices=["simple3dlstm","r3d"], required=True)
-    p.add_argument("--data_path",  type=str,   default="./")
+    p.add_argument("--data_path",  type=str,   default=r"C:\Users\zhams\HWs\Autsim")
     p.add_argument("--max_frames", type=int,   default=60)
     p.add_argument("--target_size",type=int,   nargs=2, default=[112,112])
     p.add_argument("--batch_size", type=int,   default=8)
@@ -47,14 +47,16 @@ if __name__=="__main__":
     #                                             cfg.max_frames, tuple(cfg.target_size),
     #                                             cfg.batch_size, cfg.workers,
     #                                             transform=None)
-    train_loader, val_loader = make_dataloaders(
-        tr_p, tr_l,
-        val_p,   val_l,
-        max_frames=60,
-        target_size=(112,112),
-        batch_size=8,
-        num_workers=4,
-        augment=True   # toggle on/off your spatial augms
+    train_loader, val_loader, test_loader = make_dataloaders(
+        paths=paths, labels=labels,
+        max_frames=cfg.max_frames,
+        target_size=tuple(cfg.target_size),
+        batch_size=cfg.batch_size,
+        num_workers=cfg.workers,
+        augment=True,
+        val_frac=0.10,
+        test_frac=0.20,
+        random_seed=42
     )
     # model, loss, optimizer, earlystopper
     model     = get_model(cfg.model, cfg).to(cfg.device)
@@ -76,14 +78,24 @@ if __name__=="__main__":
 
         # evaluate
         def eval_split(dl):
-            ys, ps = [], []
+            ys, ps, losses = [], [], []
             with torch.no_grad():
                 model.eval()
                 for X, y in dl:
-                    X,y = X.to(cfg.device), y.to(cfg.device)
+                    X, y = X.to(cfg.device), y.to(cfg.device)
                     out = model(X)
-                    ys.extend(y.cpu().numpy()); ps.extend(out.cpu().numpy())
-            return compute_metrics(np.array(ys), np.array(ps))
+                    loss = criterion(out, y)
+                    losses.append(loss.item() * y.size(0))
+                    ys.extend(y.cpu().numpy())
+                    ps.extend(out.cpu().numpy())
+
+            # average loss
+            avg_loss = sum(losses) / len(dl.dataset)
+
+            metrics = compute_metrics(np.array(ys), np.array(ps))
+            metrics["loss"] = avg_loss
+            return metrics
+
 
         tr_metrics  = eval_split(train_loader)
         val_metrics = eval_split(val_loader)
@@ -95,9 +107,9 @@ if __name__=="__main__":
             print(f"→ Early stopping at epoch {epoch}")
             break
 
-    # final test
-    test_metrics = eval_split(val_loader)  # replace with true test loader if you have one
-    print("Test metrics:", test_metrics)
-    wandb.log({f"test_{k}":v for k,v in test_metrics.items()})
+    # final test eval on held‐out test set:
+    test_metrics = eval_split(test_loader)
+    print("▶ Test metrics:", test_metrics)
+    wandb.log({f"test_{k}": v for k,v in test_metrics.items()})
     wandb.finish()
     print("Done. Best model at:", stopper.ckpt_path)
