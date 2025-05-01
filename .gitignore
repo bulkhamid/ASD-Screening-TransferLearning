@@ -19,3 +19,7 @@ dist/
 wandb/
 
 .asd/
+
+# at the root of your repo
+/src/models/checkpoints/**/*.pth
+/src/models/simple_model/*.pth
