@@ -16,6 +16,6 @@ dist/
 .idea/
 
 # wandb files
-.wandb
+wandb/
 
 .asd/
