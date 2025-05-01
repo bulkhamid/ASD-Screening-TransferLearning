@@ -22,3 +22,7 @@ wandb/
 
 checkpoints/
 
+# don’t commit any of our .pth checkpoints or results
+src/models/checkpoints/
+src/models/simple_model/*.pth
+src/models/results/
