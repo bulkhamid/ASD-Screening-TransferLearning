@@ -304,38 +304,70 @@ def main():
               f"Rec={test_met['recall']:.4f}  "
               f"F1={test_met['f1']:.4f}")
 
+        
         # W&B plots (only if both classes present)
         if len(set(test_met["y_true"])) == 2:
+            # build a (N,2) array of [P(neg), P(pos)]
+            pos = np.array(test_met["y_score"], dtype=np.float32)
+            neg = 1.0 - pos
+            probas = np.vstack([neg, pos]).T
+
             wandb.log({
                 f"fold{fold}/test_confmat":
-                    wandb.plot.confusion_matrix(y_true=test_met["y_true"],
-                                                preds=test_met["y_pred"],
-                                                class_names=["neg", "pos"]),
+                    wandb.plot.confusion_matrix(
+                        y_true=test_met["y_true"],
+                        preds=test_met["y_pred"],
+                        class_names=["neg", "pos"]
+                    ),
                 f"fold{fold}/test_roc":
-                    wandb.plot.roc_curve(test_met["y_true"], test_met["y_score"]),
+                    wandb.plot.roc_curve(
+                        y_true=test_met["y_true"],
+                        y_probas=probas
+                    ),
                 f"fold{fold}/test_pr":
-                    wandb.plot.pr_curve(test_met["y_true"], test_met["y_score"]),
+                    wandb.plot.pr_curve(
+                        y_true=test_met["y_true"],
+                        y_probas=probas
+                    ),
             })
 
-        # optional Grad‑CAM
+
+        # optional Grad-CAM
         try:
             from torchcam.methods import SmoothGradCAMpp
-            cam_layer = model.net.layer4[-1] if cfg.model == "r3d" else model.cnn[-1]
-            cam_extractor = SmoothGradCAMpp(cam_layer)
+
+            # 1) Hook into the backbone and specify the layer you want to inspect
+            backbone = model.net    if cfg.model=="r3d" else model.cnn
+            target   = backbone.layer4[-1] if cfg.model=="r3d" else backbone[-1]
+            cam_extractor = SmoothGradCAMpp(backbone, target_layer=target)
+
+            # 2) Grab one batch and run it through your full model
             X_sample, y_sample = next(iter(te_loader))
             X_sample = X_sample.to(device)
+            logits   = model(X_sample)            # shape [B,1]
 
-            with autocast(device_type=device.type):
-                logits = model(X_sample)
-            cam   = cam_extractor(logits[0], category=int(y_sample[0]))
-            heat  = cam[0][cfg.max_frames // 2].cpu().numpy()
-            frame = X_sample[0].permute(1, 2, 3, 0)[cfg.max_frames // 2].cpu().numpy()
+            # 3) Build a 2-class score vector: [-logit, +logit]
+            #    so class 0 score = -logit, class 1 score = +logit
+            scores2  = torch.cat([-logits, logits], dim=1)  # now shape [B,2]
+
+            # 4) Pick out the first example and its true label
+            sample_scores = scores2[:1]                    # shape [1,2]
+            sample_label  = int(y_sample[0].item())        # e.g. 0 or 1
+
+            # 5) Call the CAM extractor properly:
+            cam_map = cam_extractor(sample_scores, [sample_label])
+
+            # cam_map[target] is now a 4D tensor [1, T, H, W]
+            # you can extract the middle frame’s heatmap:
+            heat  = cam_map[target][0, cfg.max_frames//2].cpu().numpy()
+            frame = X_sample[0].permute(1,2,3,0)[cfg.max_frames//2].cpu().numpy()
             heat  = np.clip(heat, 0, 1)[..., None]
-            overlay = np.uint8((frame + heat * np.array([1, 0, 0])) /
-                               np.max(frame + heat) * 255)
+            overlay = np.uint8((frame + heat * np.array([1, 0, 0])) / np.max(frame + heat) * 255)
             wandb.log({f"fold{fold}/gradcam": wandb.Image(overlay)})
+
         except ImportError:
             pass
+
 
         all_results.append(test_met)
 
