@@ -192,7 +192,7 @@ if __name__=="__main__":
     skf = StratifiedKFold(n_splits=config.n_splits,
                           shuffle=True, random_state=config.random_seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    criterion = nn.BCELoss()
+    criterion = nn.BCEWithLogitsLoss()
     fold_results = []
 
     for fold, (train_idx, temp_idx) in enumerate(skf.split(paths, labels), 1):

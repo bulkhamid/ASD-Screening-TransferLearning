@@ -169,6 +169,7 @@ def main():
     ap.add_argument("--num_workers", type=int, default=4)
     ap.add_argument("--splits", type=int, default=5, help="folds if --cv")
     ap.add_argument("--cv", action="store_true", help="GroupKFold CV (else hold‑out)")
+    ap.add_argument("--gradcam", action="store_true", help="enable GradCAM visualization")
     cfg = ap.parse_args()
 
     # ─── reproducibility ─────────────────────────────────────────────────────────
@@ -331,47 +332,46 @@ def main():
                     ),
             })
 
+        if cfg.gradcam:    
+            # optional Grad-CAM
+            try:
+                from torchcam.methods import GradCAMpp
 
-        # optional Grad-CAM
-        try:
-            from torchcam.methods import CAM
+                # pick backbone & layer
+                backbone = model.net if cfg.model == 'r3d' else model.cnn
+                # specify a real Conv3d layer
+                target_layer = 'layer4.1.conv2' if cfg.model == 'r3d' else 'cnn.6'
 
-            # 1) Pick your backbone and the layer to inspect
-            backbone     = model.net     if cfg.model == "r3d" else model.cnn
-            target_layer = (backbone.layer4[-1] 
-                            if cfg.model == "r3d" 
-                            else backbone[-1])
+                cam_extractor = GradCAMpp(
+                    model=backbone,
+                    target_layer=target_layer,
+                    fc_layer='fc' if cfg.model == 'r3d' else 'head.3'
+                )
 
-            # 2) Instantiate the CAM extractor
-            cam_extractor = CAM(
-                model=backbone,
-                target_layer=target_layer,
-                fc_layer="fc"              # torchvision’s classifier is named "fc"
-            )
+                # get one test sample
+                X_batch, y_batch = next(iter(te_loader))
+                frame5d = X_batch[0]  # (C, T, H, W)
+                mid = cfg.max_frames // 2
+                frame4d = frame5d[:, mid].unsqueeze(0).to(device)  # (1, C, H, W)
+                label1 = int(y_batch[0].item())
 
-            # 3) Grab exactly one sample from the test loader
-            X_batch, y_batch = next(iter(te_loader))
-            X1     = X_batch[:1].to(device)    # shape [1, C, T, H, W]
-            label1 = int(y_batch[0].item())    # 0 or 1
+                # compute CAM on 4D frame
+                cams = cam_extractor(frame4d, [label1])
+                heat = cams[target_layer][0].cpu().numpy()  # (H, W)
 
-            # 4) Forward + get the CAM map
-            #    CAM’s signature is CAM(input_tensor, class_idx_list)
-            cams = cam_extractor(X1, [label1])
+                # overlay
+                frame_np = frame4d[0].permute(1, 2, 0).cpu().numpy()  # (H, W, C)
+                heat_norm = (heat - heat.min()) / (heat.max() - heat.min())
+                overlay = np.uint8((frame_np + heat_norm[..., None] * np.array([1, 0, 0]))
+                                / np.max(frame_np + heat_norm[..., None] * np.array([1, 0, 0]))
+                                * 255)
 
-            # 5) Extract the middle frame’s heatmap and overlay it
-            heat  = cams[target_layer][0, cfg.max_frames // 2].cpu().numpy()
-            frame = X1[0].permute(1,2,3,0)[cfg.max_frames // 2].cpu().numpy()
-            heat  = np.clip(heat, 0, 1)[..., None]
-            overlay = np.uint8((frame + heat * np.array([1, 0, 0])) 
-                               / np.max(frame + heat) * 255)
-
-            # 6) Log the CAM image to W&B
-            wandb.log({f"fold{fold}/cam": wandb.Image(overlay)})
-                
-        except ImportError:
-            print("torchcam not installed - skipping visualization")
-        except Exception as e:
-            print(f"GradCAM visualization skipped: {str(e)}")
+                wandb.log({f"fold{fold}/cam": wandb.Image(overlay)})
+                    
+            except ImportError:
+                print("torchcam not installed - skipping visualization")
+            except Exception as e:
+                print(f"GradCAM visualization skipped: {str(e)}")
 
         all_results.append(test_met)
 
