@@ -334,40 +334,44 @@ def main():
 
         # optional Grad-CAM
         try:
-            from torchcam.methods import SmoothGradCAMpp
+            from torchcam.methods import CAM
 
-            # 1) Hook into the backbone and specify the layer you want to inspect
-            backbone = model.net    if cfg.model=="r3d" else model.cnn
-            target   = backbone.layer4[-1] if cfg.model=="r3d" else backbone[-1]
-            cam_extractor = SmoothGradCAMpp(backbone, target_layer=target)
+            # 1) Pick your backbone and the layer to inspect
+            backbone     = model.net     if cfg.model == "r3d" else model.cnn
+            target_layer = (backbone.layer4[-1] 
+                            if cfg.model == "r3d" 
+                            else backbone[-1])
 
-            # 2) Grab one batch and run it through your full model
-            X_sample, y_sample = next(iter(te_loader))
-            X_sample = X_sample.to(device)
-            logits   = model(X_sample)            # shape [B,1]
+            # 2) Instantiate the CAM extractor
+            cam_extractor = CAM(
+                model=backbone,
+                target_layer=target_layer,
+                fc_layer="fc"              # torchvision’s classifier is named "fc"
+            )
 
-            # 3) Build a 2-class score vector: [-logit, +logit]
-            #    so class 0 score = -logit, class 1 score = +logit
-            scores2  = torch.cat([-logits, logits], dim=1)  # now shape [B,2]
+            # 3) Grab exactly one sample from the test loader
+            X_batch, y_batch = next(iter(te_loader))
+            X1     = X_batch[:1].to(device)    # shape [1, C, T, H, W]
+            label1 = int(y_batch[0].item())    # 0 or 1
 
-            # 4) Pick out the first example and its true label
-            sample_scores = scores2[:1]                    # shape [1,2]
-            sample_label  = int(y_sample[0].item())        # e.g. 0 or 1
+            # 4) Forward + get the CAM map
+            #    CAM’s signature is CAM(input_tensor, class_idx_list)
+            cams = cam_extractor(X1, [label1])
 
-            # 5) Call the CAM extractor properly:
-            cam_map = cam_extractor(sample_scores, [sample_label])
-
-            # cam_map[target] is now a 4D tensor [1, T, H, W]
-            # you can extract the middle frame’s heatmap:
-            heat  = cam_map[target][0, cfg.max_frames//2].cpu().numpy()
-            frame = X_sample[0].permute(1,2,3,0)[cfg.max_frames//2].cpu().numpy()
+            # 5) Extract the middle frame’s heatmap and overlay it
+            heat  = cams[target_layer][0, cfg.max_frames // 2].cpu().numpy()
+            frame = X1[0].permute(1,2,3,0)[cfg.max_frames // 2].cpu().numpy()
             heat  = np.clip(heat, 0, 1)[..., None]
-            overlay = np.uint8((frame + heat * np.array([1, 0, 0])) / np.max(frame + heat) * 255)
-            wandb.log({f"fold{fold}/gradcam": wandb.Image(overlay)})
+            overlay = np.uint8((frame + heat * np.array([1, 0, 0])) 
+                               / np.max(frame + heat) * 255)
 
+            # 6) Log the CAM image to W&B
+            wandb.log({f"fold{fold}/cam": wandb.Image(overlay)})
+                
         except ImportError:
-            pass
-
+            print("torchcam not installed - skipping visualization")
+        except Exception as e:
+            print(f"GradCAM visualization skipped: {str(e)}")
 
         all_results.append(test_met)
 
