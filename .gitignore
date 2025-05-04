@@ -29,3 +29,5 @@ src/models/results/
 
 *.pth
 *.pt
+
+data/*.npz
