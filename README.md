@@ -60,6 +60,7 @@ Early detection of Autism Spectrum Disorder (ASD) is crucial for timely interven
 * **Sanity Check:** Provides a label shuffling script (`experiments/debug_shuffle_labels.py`) to verify that the model cannot learn effectively when labels are randomized, helping to rule out data leakage or implementation bugs.
 
 ## Repository Structure
+```
 └── bulkhamid-asd-screening-transferlearning/
     ├── README.md               # This file
     ├── LICENSE                 # Project license (MIT)
@@ -96,6 +97,7 @@ Early detection of Autism Spectrum Disorder (ASD) is crucial for timely interven
             ├── metrics.py      # Function to compute evaluation metrics
             ├── temperature_scaling.py # TemperatureScaler class for calibration
             └── wandb_logger.py # Helper for wandb logging (though train.py logs directly)
+```
 
 ## Methodology
 
