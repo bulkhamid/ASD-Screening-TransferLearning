@@ -279,53 +279,54 @@ f1     : 0.815
 ------------------------------------------------------------------------------------------
 | # | dropout `‑‑drop` | weight‑decay `‑‑wd` | temp‑scaling `‑‑temp` | epochs / patience |
 | 7 | 0.20             | 1e‑4                | **on**                | 25 / 10           |
-python train_regularized.py --model simple3dlstm --drop 0.4 --wd 1e-4 --temp  --epochs 25 --patience 10
+python -m experiments.train_regularized --model simple3dlstm --drop 0.2 --wd 1e-4 --temp --epochs 25 --patience 10
 
 ▶  Stage **full**  (epochs=25, wd=0.0001)
 
-[full] ep 01  val‑loss 0.6896  time=18.4s
-[full] ep 02  val‑loss 0.6945  time=18.0s
-[full] ep 03  val‑loss 0.6824  time=18.2s
-[full] ep 04  val‑loss 0.6871  time=18.1s
-[full] ep 05  val‑loss 0.6761  time=17.9s
-[full] ep 06  val‑loss 0.6660  time=18.0s
-[full] ep 07  val‑loss 0.6777  time=17.9s
-[full] ep 08  val‑loss 0.6828  time=18.1s
-[full] ep 09  val‑loss 0.6868  time=17.9s
-[full] ep 10  val‑loss 0.6797  time=17.8s
-[full] ep 11  val‑loss 0.6796  time=17.6s
-[full] ep 12  val‑loss 0.6693  time=18.1s
-[full] ep 13  val‑loss 0.6655  time=18.1s
-[full] ep 14  val‑loss 0.6619  time=18.2s
-[full] ep 15  val‑loss 0.6691  time=17.9s
-[full] ep 16  val‑loss 0.6691  time=18.2s
-[full] ep 17  val‑loss 0.6728  time=17180.6s
-[full] ep 18  val‑loss 0.6435  time=18.6s
-[full] ep 19  val‑loss 0.6686  time=26.7s
-[full] ep 20  val‑loss 0.6648  time=14.0s
-[full] ep 21  val‑loss 0.6572  time=13.7s
-[full] ep 22  val‑loss 0.6549  time=13.2s
-[full] ep 23  val‑loss 0.6556  time=13.9s
-[full] ep 24  val‑loss 0.6619  time=14.2s
-[full] ep 25  val‑loss 0.6600  time=14.0s
->> optimal T = 0.881
-✓  temperature scaling applied  (T = 0.88)
+[full] ep 01  val‑loss 0.6753  time=16.0s
+[full] ep 02  val‑loss 0.6810  time=13.3s
+[full] ep 03  val‑loss 0.6864  time=13.1s
+[full] ep 04  val‑loss 0.6756  time=13.1s
+[full] ep 05  val‑loss 0.6748  time=13.1s
+[full] ep 06  val‑loss 0.6804  time=13.1s
+[full] ep 07  val‑loss 0.6771  time=13.0s
+[full] ep 08  val‑loss 0.6689  time=13.1s
+[full] ep 09  val‑loss 0.6658  time=12.9s
+[full] ep 10  val‑loss 0.6563  time=12.8s
+[full] ep 11  val‑loss 0.6620  time=12.9s
+[full] ep 12  val‑loss 0.6513  time=12.8s
+[full] ep 13  val‑loss 0.6520  time=12.9s
+[full] ep 14  val‑loss 0.6447  time=13.0s
+[full] ep 15  val‑loss 0.6348  time=13.0s
+[full] ep 16  val‑loss 0.6308  time=13.4s
+[full] ep 17  val‑loss 0.6313  time=13.1s
+[full] ep 18  val‑loss 0.6401  time=13.2s
+[full] ep 19  val‑loss 0.6258  time=12.8s
+[full] ep 20  val‑loss 0.6277  time=13.3s
+[full] ep 21  val‑loss 0.6280  time=13.0s
+[full] ep 22  val‑loss 0.6305  time=12.9s
+[full] ep 23  val‑loss 0.6203  time=13.1s
+[full] ep 24  val‑loss 0.6270  time=13.2s
+[full] ep 25  val‑loss 0.6322  time=13.0s
+>> optimal T = 0.829
+✓  temperature scaling applied  (T = 0.83)
 
 ◎  chosen threshold = 0.50
-val‑loss=0.637  val‑AUC=1.000
+val‑loss=0.606  val‑AUC=1.000
 
 === TEST metrics ===
-auc    : 0.860
-acc    : 0.773
-prec   : 0.688
-rec    : 1.000
-f1     : 0.815
+auc    : 0.959
+acc    : 0.955
+prec   : 1.000
+rec    : 0.909
+f1     : 0.952
 
-|   #   | Drop‑out | Weight‑decay | Temp. scaling | **val‑loss** | **val‑AUC** | **TEST AUC** | **TEST F1** | Notes                                                         |
-| :---: | :------: | :----------: | :-----------: | :----------: | :---------: | :----------: | :---------: | :------------------------------------------------------------ |
-| **1** |   0.00   |   **1 e‑4**  |      off      |   **0.58**   |   **1.00**  |   **0.96**   |   **0.96**  | *Best overall*                                                |
-|   2   |   0.00   |     1 e‑4    |     **on**    |     0.55     |     1.00    |     0.99     |     0.82    | temperature ⬆ T≈0.49 → probs over‑confident → threshold drift |
-|   3   |   0.30   |     1 e‑4    |      off      |     0.64     |     1.00    |     0.98     |     0.84    | heavier conv‑dropout → weaker recall                          |
-|   4   |   0.30   |     1 e‑4    |       on      |     0.72     |     1.00    |     0.96     |     0.69    | TS + dropout hurt jointly                                     |
-|   5   |   0.30   |   **5 e‑5**  |       on      |     0.73     |     0.90    |     0.94     |     0.67    | ↓ wd = less regularisation, still poor                        |
-|   6   |   0.40   |    1 e‑4\*   |       on      |     0.72     |     0.80    |     0.74     |     0.67    | early stop, high T (1.86) ⇒ flat probs                        |
+| # | 3‑D dropout | weight‑decay | TS | best VAL‑loss | best TEST AUC | TEST Acc  | TEST F1   | comment                       |
+| - | ----------- | ------------ | -- | ------------- | ------------- | --------- | --------- | ----------------------------- |
+| 1 | 0.00        | 1e‑4         | ✗  | 0.498         | 0.992         | 0.909     | 0.909     | solid                         |
+| 2 | 0.00        | 1e‑4         | ✓  | **0.404**     | **0.992**     | **0.955** | **0.957** | calibration helps             |
+| 3 | 0.30        | 1e‑4         | ✗  | 0.667         | 0.901         | 0.591     | 0.710     | too much dropout              |
+| 4 | 0.30        | 1e‑4         | ✓  | 0.666         | 0.901         | 0.591     | 0.710     | —                             |
+| 5 | 0.30        | 5e‑5         | ✓  | 0.666         | 0.901         | 0.591     | 0.710     | —                             |
+| 6 | 0.40        | 1e‑4         | ✓  | 0.637         | 0.860         | 0.773     | 0.815     | —                             |
+| 7 | 0.20        | 1e‑4         | ✓  | 0.606         | 0.959         | 0.955     | 0.952     | slightly dropout effect       |

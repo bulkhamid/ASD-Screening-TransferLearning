@@ -341,3 +341,13 @@ acc    : 1.000
 prec   : 1.000
 rec    : 1.000
 f1     : 1.000
+
+
+| # | unfreeze layer4 | weight‑decay | TS | best VAL‑loss | best TEST AUC | TEST Acc  | TEST F1   | comment                            |
+| - | --------------- | ------------ | -- | ------------- | ------------- | --------- | --------- | ---------------------------------- |
+| 1 | **no**          | 1e‑4         | ✗  | **0.453**     | 0.983         | 0.909     | 0.917     | head‑only, 25 ep                   |
+| 2 | no              | 1e‑4         | ✓  | 0.350         | 0.983         | 0.909     | 0.917     | TS improved calibration            |
+| 3 | **yes**         | 1e‑4         | ✗  | 0.017         | **1.000**     | **1.000** | **1.000** | light fine‑tune wins               |
+| 4 | yes             | 1e‑4         | ✓  | **0.001**     | 1.000         | 1.000     | 1.000     | best overall, T≈0.48               |
+| 5 | yes             | 5e‑5         | ✓  | 0.001         | 1.000         | 1.000     | 1.000     | wd not sensitive                   |
+| 6 | yes             | 5e‑4         | ✓  | 0.001         | 1.000         | 1.000     | 1.000     | over‑regularised but still perfect |
