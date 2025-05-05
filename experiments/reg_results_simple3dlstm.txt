@@ -1,0 +1,332 @@
+| # | dropout `‑‑drop` | weight‑decay `‑‑wd` | temp‑scaling `‑‑temp` | epochs / patience |
+| - | ---------------- | ------------------- | --------------------- | ----------------- |
+| 1 | 0.00             | 1e‑4                | **off**               | 25 / 10           |
+| 2 | 0.00             | 1e‑4                | **on**                | 25 / 10           |
+| 3 | 0.30             | 1e‑4                | **off**               | 25 / 10           |
+| 4 | 0.30             | 1e‑4                | **on**                | 25 / 10           |
+| 5 | 0.30             | 5e‑5                | **on**                | 25 / 10           |
+| 6 | 0.40             | 1e‑4                | **on**                | 25 / 10           |
+| 7 | 0.20             | 1e‑4                | **on**                | 25 / 10           |
+
+------------------------------------------------------------------------------------------
+| # | dropout `‑‑drop` | weight‑decay `‑‑wd` | temp‑scaling `‑‑temp` | epochs / patience |
+| 1 | 0.00             | 1e‑4                | **off**               | 25 / 10           |
+python train_regularized.py --model simple3dlstm  --drop 0 --wd 1e-4 --epochs 25 --patience 10
+
+
+▶  Stage **full**  (epochs=25, wd=0.0001)
+
+[full] ep 01  val‑loss 0.6866  time=13.1s
+[full] ep 02  val‑loss 0.6704  time=12.8s
+[full] ep 03  val‑loss 0.6541  time=13.0s
+[full] ep 04  val‑loss 0.6366  time=12.9s
+[full] ep 05  val‑loss 0.6161  time=12.9s
+[full] ep 06  val‑loss 0.6142  time=13.0s
+[full] ep 07  val‑loss 0.5989  time=13.1s
+[full] ep 08  val‑loss 0.5969  time=13.3s
+[full] ep 09  val‑loss 0.5909  time=13.0s
+[full] ep 10  val‑loss 0.5778  time=13.1s
+[full] ep 11  val‑loss 0.5830  time=12.5s
+[full] ep 12  val‑loss 0.5641  time=12.8s
+[full] ep 13  val‑loss 0.5423  time=13.0s
+[full] ep 14  val‑loss 0.5199  time=13.2s
+[full] ep 15  val‑loss 0.5285  time=13.7s
+[full] ep 16  val‑loss 0.5317  time=14.7s
+[full] ep 17  val‑loss 0.5232  time=13.7s
+[full] ep 18  val‑loss 0.5551  time=13.6s
+[full] ep 19  val‑loss 0.5238  time=13.6s
+[full] ep 20  val‑loss 0.5116  time=14.1s
+[full] ep 21  val‑loss 0.5043  time=13.3s
+[full] ep 22  val‑loss 0.5064  time=13.3s
+[full] ep 23  val‑loss 0.5060  time=13.5s
+[full] ep 24  val‑loss 0.4995  time=13.6s
+[full] ep 25  val‑loss 0.4982  time=13.9s
+
+◎  chosen threshold = 0.50
+val‑loss=0.498  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 0.992
+acc    : 0.909
+prec   : 0.909
+rec    : 0.909
+f1     : 0.909
+
+------------------------------------------------------------------------------------------
+| # | dropout `‑‑drop` | weight‑decay `‑‑wd` | temp‑scaling `‑‑temp` | epochs / patience |
+| 2 | 0.00             | 1e‑4                | **on**                | 25 / 10           |
+python train_regularized.py --model simple3dlstm  --drop 0 --wd 1e-4 --temp --epochs 25 --patience 10
+
+▶  Stage **full**  (epochs=25, wd=0.0001)
+
+[full] ep 01  val‑loss 0.6866  time=12.7s
+[full] ep 02  val‑loss 0.6704  time=14.2s
+[full] ep 03  val‑loss 0.6541  time=14.2s
+[full] ep 04  val‑loss 0.6366  time=14.2s
+[full] ep 05  val‑loss 0.6161  time=14.8s
+[full] ep 06  val‑loss 0.6142  time=15.3s
+[full] ep 07  val‑loss 0.5989  time=13.9s
+[full] ep 08  val‑loss 0.5969  time=14.3s
+[full] ep 09  val‑loss 0.5909  time=13.9s
+[full] ep 10  val‑loss 0.5778  time=13.7s
+[full] ep 11  val‑loss 0.5830  time=14.0s
+[full] ep 12  val‑loss 0.5641  time=13.9s
+[full] ep 13  val‑loss 0.5423  time=13.9s
+[full] ep 14  val‑loss 0.5199  time=14.2s
+[full] ep 15  val‑loss 0.5285  time=14.0s
+[full] ep 16  val‑loss 0.5317  time=14.3s
+[full] ep 17  val‑loss 0.5232  time=13.8s
+[full] ep 18  val‑loss 0.5551  time=14.0s
+[full] ep 19  val‑loss 0.5238  time=13.9s
+[full] ep 20  val‑loss 0.5116  time=14.4s
+[full] ep 21  val‑loss 0.5043  time=14.2s
+[full] ep 22  val‑loss 0.5064  time=14.0s
+[full] ep 23  val‑loss 0.5060  time=14.1s
+[full] ep 24  val‑loss 0.4995  time=14.0s
+[full] ep 25  val‑loss 0.4982  time=14.2s
+>> optimal T = 0.617
+✓  temperature scaling applied  (T = 0.62)
+
+◎  chosen threshold = 0.45
+val‑loss=0.404  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 0.992
+acc    : 0.955
+prec   : 0.917
+rec    : 1.000
+f1     : 0.957
+
+------------------------------------------------------------------------------------------
+| # | dropout `‑‑drop` | weight‑decay `‑‑wd` | temp‑scaling `‑‑temp` | epochs / patience |
+| 3 | 0.30             | 1e‑4                | **off**               | 25 / 10           |
+python train_regularized.py --model simple3dlstm  --drop 0.3 --wd 1e-4 --epochs 25 --patience 10
+▶  Stage **full**  (epochs=25, wd=0.0001)
+
+[full] ep 01  val‑loss 0.6916  time=13.6s
+[full] ep 02  val‑loss 0.6907  time=13.8s
+[full] ep 03  val‑loss 0.6829  time=14.5s
+[full] ep 04  val‑loss 0.6834  time=14.7s
+[full] ep 05  val‑loss 0.6826  time=14.5s
+[full] ep 06  val‑loss 0.6907  time=14.5s
+[full] ep 07  val‑loss 0.6925  time=14.2s
+[full] ep 08  val‑loss 0.6969  time=14.5s
+[full] ep 09  val‑loss 0.6940  time=14.3s
+[full] ep 10  val‑loss 0.6926  time=14.3s
+[full] ep 11  val‑loss 0.6860  time=14.0s
+[full] ep 12  val‑loss 0.6803  time=13.7s
+[full] ep 13  val‑loss 0.6808  time=13.8s
+[full] ep 14  val‑loss 0.6722  time=14.1s
+[full] ep 15  val‑loss 0.6778  time=14.0s
+[full] ep 16  val‑loss 0.6793  time=13.9s
+[full] ep 17  val‑loss 0.6791  time=14.2s
+[full] ep 18  val‑loss 0.6790  time=14.0s
+[full] ep 19  val‑loss 0.6744  time=13.8s
+[full] ep 20  val‑loss 0.6728  time=14.3s
+[full] ep 21  val‑loss 0.6774  time=14.2s
+[full] ep 22  val‑loss 0.6745  time=14.0s
+[full] ep 23  val‑loss 0.6714  time=13.9s
+[full] ep 24  val‑loss 0.6670  time=13.8s
+[full] ep 25  val‑loss 0.6724  time=14.1s
+
+◎  chosen threshold = 0.50
+val‑loss=0.667  val‑AUC=0.933
+
+=== TEST metrics ===
+auc    : 0.901
+acc    : 0.591
+prec   : 0.550
+rec    : 1.000
+f1     : 0.710
+
+
+------------------------------------------------------------------------------------------
+| # | dropout `‑‑drop` | weight‑decay `‑‑wd` | temp‑scaling `‑‑temp` | epochs / patience |
+| 4 | 0.30             | 1e‑4                | **on**                | 25 / 10           |
+python train_regularized.py --model simple3dlstm --drop 0.3 --wd 1e-4 --temp  --epochs 25 --patience 10
+
+▶  Stage **full**  (epochs=25, wd=0.0001)
+
+[full] ep 01  val‑loss 0.6916  time=13.0s
+[full] ep 02  val‑loss 0.6907  time=14.1s
+[full] ep 03  val‑loss 0.6829  time=14.0s
+[full] ep 04  val‑loss 0.6834  time=14.4s
+[full] ep 05  val‑loss 0.6826  time=14.1s
+[full] ep 06  val‑loss 0.6907  time=14.5s
+[full] ep 07  val‑loss 0.6925  time=14.1s
+[full] ep 08  val‑loss 0.6969  time=14.7s
+[full] ep 09  val‑loss 0.6940  time=14.6s
+[full] ep 10  val‑loss 0.6926  time=14.4s
+[full] ep 11  val‑loss 0.6860  time=14.2s
+[full] ep 12  val‑loss 0.6803  time=14.4s
+[full] ep 13  val‑loss 0.6808  time=14.5s
+[full] ep 14  val‑loss 0.6722  time=14.2s
+[full] ep 15  val‑loss 0.6778  time=13.8s
+[full] ep 16  val‑loss 0.6793  time=12.7s
+[full] ep 17  val‑loss 0.6791  time=13.0s
+[full] ep 18  val‑loss 0.6790  time=37.3s
+[full] ep 19  val‑loss 0.6744  time=19.6s
+[full] ep 20  val‑loss 0.6728  time=20.9s
+[full] ep 21  val‑loss 0.6774  time=20.5s
+[full] ep 22  val‑loss 0.6745  time=20.1s
+[full] ep 23  val‑loss 0.6714  time=20.7s
+[full] ep 24  val‑loss 0.6670  time=20.8s
+[full] ep 25  val‑loss 0.6724  time=20.0s
+>> optimal T = 0.942
+✓  temperature scaling applied  (T = 0.94)
+
+◎  chosen threshold = 0.50
+val‑loss=0.666  val‑AUC=0.933
+
+=== TEST metrics ===
+auc    : 0.901
+acc    : 0.591
+prec   : 0.550
+rec    : 1.000
+f1     : 0.710
+
+
+------------------------------------------------------------------------------------------
+| # | dropout `‑‑drop` | weight‑decay `‑‑wd` | temp‑scaling `‑‑temp` | epochs / patience |
+| 5 | 0.30             | 5e‑5                | **on**                | 25 / 10           |
+python train_regularized.py --model simple3dlstm --drop 0.3 --wd 5e-5 --temp  --epochs 25 --patience 10
+
+▶  Stage **full**  (epochs=25, wd=5e-05)
+
+[full] ep 01  val‑loss 0.6916  time=18.2s
+[full] ep 02  val‑loss 0.6907  time=17.8s
+[full] ep 03  val‑loss 0.6829  time=17.9s
+[full] ep 04  val‑loss 0.6834  time=18.0s
+[full] ep 05  val‑loss 0.6826  time=17.8s
+[full] ep 06  val‑loss 0.6907  time=17.9s
+[full] ep 07  val‑loss 0.6925  time=17.7s
+[full] ep 08  val‑loss 0.6969  time=17.9s
+[full] ep 09  val‑loss 0.6940  time=17.8s
+[full] ep 10  val‑loss 0.6926  time=17.6s
+[full] ep 11  val‑loss 0.6860  time=17.6s
+[full] ep 12  val‑loss 0.6803  time=17.9s
+[full] ep 13  val‑loss 0.6808  time=18.4s
+[full] ep 14  val‑loss 0.6722  time=18.6s
+[full] ep 15  val‑loss 0.6778  time=18.5s
+[full] ep 16  val‑loss 0.6793  time=19.8s
+[full] ep 17  val‑loss 0.6791  time=19.2s
+[full] ep 18  val‑loss 0.6790  time=18.3s
+[full] ep 19  val‑loss 0.6744  time=17.5s
+[full] ep 20  val‑loss 0.6728  time=18.3s
+[full] ep 21  val‑loss 0.6774  time=18.0s
+[full] ep 22  val‑loss 0.6745  time=17.8s
+[full] ep 23  val‑loss 0.6714  time=17.7s
+[full] ep 24  val‑loss 0.6670  time=17.6s
+[full] ep 25  val‑loss 0.6724  time=17.7s
+>> optimal T = 0.942
+✓  temperature scaling applied  (T = 0.94)
+
+◎  chosen threshold = 0.50
+val‑loss=0.666  val‑AUC=0.933
+
+=== TEST metrics ===
+auc    : 0.901
+acc    : 0.591
+prec   : 0.550
+rec    : 1.000
+f1     : 0.710
+
+------------------------------------------------------------------------------------------
+| # | dropout `‑‑drop` | weight‑decay `‑‑wd` | temp‑scaling `‑‑temp` | epochs / patience |
+| 6 | 0.40             | 1e‑4                | **on**                | 25 / 10           |
+python train_regularized.py --model simple3dlstm --drop 0.4 --wd 1e-4 --temp  --epochs 25 --patience 10
+
+▶  Stage **full**  (epochs=25, wd=0.0001)
+
+[full] ep 01  val‑loss 0.6896  time=17.8s
+[full] ep 02  val‑loss 0.6945  time=17.8s
+[full] ep 03  val‑loss 0.6824  time=18.2s
+[full] ep 04  val‑loss 0.6871  time=18.0s
+[full] ep 05  val‑loss 0.6761  time=17.9s
+[full] ep 06  val‑loss 0.6660  time=17.9s
+[full] ep 07  val‑loss 0.6777  time=17.8s
+[full] ep 08  val‑loss 0.6828  time=17.8s
+[full] ep 09  val‑loss 0.6868  time=17.6s
+[full] ep 10  val‑loss 0.6797  time=17.8s
+[full] ep 11  val‑loss 0.6796  time=17.5s
+[full] ep 12  val‑loss 0.6693  time=17.7s
+[full] ep 13  val‑loss 0.6655  time=18.0s
+[full] ep 14  val‑loss 0.6619  time=18.4s
+[full] ep 15  val‑loss 0.6691  time=17.6s
+[full] ep 16  val‑loss 0.6691  time=18.1s
+[full] ep 17  val‑loss 0.6728  time=18.0s
+[full] ep 18  val‑loss 0.6435  time=17.6s
+[full] ep 19  val‑loss 0.6686  time=17.6s
+[full] ep 20  val‑loss 0.6648  time=18.1s
+[full] ep 21  val‑loss 0.6572  time=17.8s
+[full] ep 22  val‑loss 0.6549  time=17.4s
+[full] ep 23  val‑loss 0.6556  time=17.6s
+[full] ep 24  val‑loss 0.6619  time=17.7s
+[full] ep 25  val‑loss 0.6600  time=17.8s
+>> optimal T = 0.881
+✓  temperature scaling applied  (T = 0.88)
+
+◎  chosen threshold = 0.50
+val‑loss=0.637  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 0.860
+acc    : 0.773
+prec   : 0.688
+rec    : 1.000
+f1     : 0.815
+
+------------------------------------------------------------------------------------------
+| # | dropout `‑‑drop` | weight‑decay `‑‑wd` | temp‑scaling `‑‑temp` | epochs / patience |
+| 7 | 0.20             | 1e‑4                | **on**                | 25 / 10           |
+python -m experiments.train_regularized --model simple3dlstm --drop 0.2 --wd 1e-4 --temp --epochs 25 --patience 10
+
+▶  Stage **full**  (epochs=25, wd=0.0001)
+
+[full] ep 01  val‑loss 0.6753  time=16.0s
+[full] ep 02  val‑loss 0.6810  time=13.3s
+[full] ep 03  val‑loss 0.6864  time=13.1s
+[full] ep 04  val‑loss 0.6756  time=13.1s
+[full] ep 05  val‑loss 0.6748  time=13.1s
+[full] ep 06  val‑loss 0.6804  time=13.1s
+[full] ep 07  val‑loss 0.6771  time=13.0s
+[full] ep 08  val‑loss 0.6689  time=13.1s
+[full] ep 09  val‑loss 0.6658  time=12.9s
+[full] ep 10  val‑loss 0.6563  time=12.8s
+[full] ep 11  val‑loss 0.6620  time=12.9s
+[full] ep 12  val‑loss 0.6513  time=12.8s
+[full] ep 13  val‑loss 0.6520  time=12.9s
+[full] ep 14  val‑loss 0.6447  time=13.0s
+[full] ep 15  val‑loss 0.6348  time=13.0s
+[full] ep 16  val‑loss 0.6308  time=13.4s
+[full] ep 17  val‑loss 0.6313  time=13.1s
+[full] ep 18  val‑loss 0.6401  time=13.2s
+[full] ep 19  val‑loss 0.6258  time=12.8s
+[full] ep 20  val‑loss 0.6277  time=13.3s
+[full] ep 21  val‑loss 0.6280  time=13.0s
+[full] ep 22  val‑loss 0.6305  time=12.9s
+[full] ep 23  val‑loss 0.6203  time=13.1s
+[full] ep 24  val‑loss 0.6270  time=13.2s
+[full] ep 25  val‑loss 0.6322  time=13.0s
+>> optimal T = 0.829
+✓  temperature scaling applied  (T = 0.83)
+
+◎  chosen threshold = 0.50
+val‑loss=0.606  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 0.959
+acc    : 0.955
+prec   : 1.000
+rec    : 0.909
+f1     : 0.952
+
+| # | 3‑D dropout | weight‑decay | TS | best VAL‑loss | best TEST AUC | TEST Acc  | TEST F1   | comment                       |
+| - | ----------- | ------------ | -- | ------------- | ------------- | --------- | --------- | ----------------------------- |
+| 1 | 0.00        | 1e‑4         | ✗  | 0.498         | 0.992         | 0.909     | 0.909     | solid                         |
+| 2 | 0.00        | 1e‑4         | ✓  | **0.404**     | **0.992**     | **0.955** | **0.957** | calibration helps             |
+| 3 | 0.30        | 1e‑4         | ✗  | 0.667         | 0.901         | 0.591     | 0.710     | too much dropout              |
+| 4 | 0.30        | 1e‑4         | ✓  | 0.666         | 0.901         | 0.591     | 0.710     | —                             |
+| 5 | 0.30        | 5e‑5         | ✓  | 0.666         | 0.901         | 0.591     | 0.710     | —                             |
+| 6 | 0.40        | 1e‑4         | ✓  | 0.637         | 0.860         | 0.773     | 0.815     | —                             |
+| 7 | 0.20        | 1e‑4         | ✓  | 0.606         | 0.959         | 0.955     | 0.952     | slightly dropout effect       |

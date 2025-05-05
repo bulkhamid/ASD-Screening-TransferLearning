@@ -1,0 +1,353 @@
+| # | **model** | `--finetune`<br>(unfreeze layer 4) | `--drop` | `--wd` | `--temp` | epochs / patience |
+| - | --------- | ---------------------------------- | -------- | ------ | -------- | ----------------- |
+| 1 | **r3d**   | **no**  (head‑only)                |  —       | 1 e‑4  | off      | 25 / 10           |
+| 2 | r3d       | no                                 |  —       | 1 e‑4  | **on**   | 25 / 10           |
+| 3 | r3d       | **yes**                            |  —       | 1 e‑4  | off      | 25 / 10           |
+| 4 | r3d       | yes                                |  —       | 1 e‑4  | **on**   | 25 / 10           |
+| 5 | r3d       | yes                                |  —       | 5 e‑5  | **on**   | 25 / 10           |
+| 6 | r3d       | yes                                |  —       | 5 e‑4  | **on**   | 25 / 10           |
+
+| # | **model** | `--finetune`<br>(unfreeze layer 4) | `--drop` | `--wd` | `--temp` | epochs / patience |
+---------------------------------------------------------------------------------------------------------
+| 1 | **r3d**   | **no**  (head‑only)                |  —       | 1 e‑4  | off      | 25 / 10           |
+python train_regularized.py --model r3d --wd 1e-4 --epochs 50 --patience 10
+▶  Stage **head**  (epochs=25, wd=0.0001)
+
+[head] ep 01  val‑loss 0.6455  time=14.1s
+[head] ep 02  val‑loss 0.6123  time=14.4s
+[head] ep 03  val‑loss 0.6028  time=14.4s
+[head] ep 04  val‑loss 0.6179  time=14.4s
+[head] ep 05  val‑loss 0.5798  time=14.2s
+[head] ep 06  val‑loss 0.5446  time=14.6s
+[head] ep 07  val‑loss 0.5567  time=14.2s
+[head] ep 08  val‑loss 0.5543  time=17.3s
+[head] ep 09  val‑loss 0.5249  time=14.9s
+[head] ep 10  val‑loss 0.5146  time=16.9s
+[head] ep 11  val‑loss 0.5211  time=14.9s
+[head] ep 12  val‑loss 0.5269  time=14.3s
+[head] ep 13  val‑loss 0.4905  time=14.2s
+[head] ep 14  val‑loss 0.4684  time=14.4s
+[head] ep 15  val‑loss 0.4700  time=14.8s
+[head] ep 16  val‑loss 0.4865  time=14.1s
+[head] ep 17  val‑loss 0.4605  time=14.2s
+[head] ep 18  val‑loss 0.4572  time=14.5s
+[head] ep 19  val‑loss 0.4532  time=14.5s
+[head] ep 20  val‑loss 0.4597  time=14.2s
+[head] ep 21  val‑loss 0.4699  time=14.4s
+[head] ep 22  val‑loss 0.4649  time=13.9s
+[head] ep 23  val‑loss 0.4654  time=13.2s
+[head] ep 24  val‑loss 0.4543  time=13.0s
+[head] ep 25  val‑loss 0.4619  time=13.2s
+
+◎  chosen threshold = 0.45
+val‑loss=0.453  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 0.983
+acc    : 0.909
+prec   : 0.846
+rec    : 1.000
+f1     : 0.917
+
+| # | **model** | `--finetune`<br>(unfreeze layer 4) | `--drop` | `--wd` | `--temp` | epochs / patience |
+---------------------------------------------------------------------------------------------------------
+| 2 | r3d       | no                                 |  —       | 1 e‑4  | **on**   | 25 / 10           |
+python train_regularized.py --model r3d --wd 1e-4 --temp --epochs 50 --patience 10
+
+▶  Stage **head**  (epochs=25, wd=0.0001)
+
+[head] ep 01  val‑loss 0.6455  time=13.3s
+[head] ep 02  val‑loss 0.6123  time=13.4s
+[head] ep 03  val‑loss 0.6028  time=13.0s
+[head] ep 04  val‑loss 0.6179  time=13.2s
+[head] ep 05  val‑loss 0.5798  time=13.3s
+[head] ep 06  val‑loss 0.5446  time=13.3s
+[head] ep 07  val‑loss 0.5567  time=13.4s
+[head] ep 08  val‑loss 0.5543  time=13.7s
+[head] ep 09  val‑loss 0.5249  time=13.9s
+[head] ep 10  val‑loss 0.5146  time=13.1s
+[head] ep 11  val‑loss 0.5211  time=13.0s
+[head] ep 12  val‑loss 0.5269  time=13.2s
+[head] ep 13  val‑loss 0.4905  time=13.1s
+[head] ep 14  val‑loss 0.4684  time=13.0s
+[head] ep 15  val‑loss 0.4700  time=13.4s
+[head] ep 16  val‑loss 0.4865  time=13.1s
+[head] ep 17  val‑loss 0.4605  time=13.2s
+[head] ep 18  val‑loss 0.4572  time=13.1s
+[head] ep 19  val‑loss 0.4532  time=12.9s
+[head] ep 20  val‑loss 0.4597  time=12.9s
+[head] ep 21  val‑loss 0.4699  time=13.2s
+[head] ep 22  val‑loss 0.4649  time=13.2s
+[head] ep 23  val‑loss 0.4654  time=13.0s
+[head] ep 24  val‑loss 0.4543  time=13.0s
+[head] ep 25  val‑loss 0.4619  time=13.5s
+>> optimal T = 0.602
+✓  temperature scaling applied  (T = 0.60)
+
+◎  chosen threshold = 0.45
+val‑loss=0.350  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 0.983
+acc    : 0.909
+prec   : 0.846
+rec    : 1.000
+f1     : 0.917
+PS C:\Users\zhams\OneDrive\Desktop\ASD-Screening-TransferLearning> 
+
+| # | **model** | `--finetune`<br>(unfreeze layer 4) | `--drop` | `--wd` | `--temp` | epochs / patience |
+---------------------------------------------------------------------------------------------------------
+| 3 | r3d       | **yes**                            |  —       | 1 e‑4  | off      | 25 / 10           |
+python train_regularized.py --model r3d --finetune --wd 1e-4  --epochs 50 --patience 10
+▶  Stage **head**  (epochs=25, wd=0.0001)
+
+[head] ep 01  val‑loss 0.6455  time=13.2s
+[head] ep 02  val‑loss 0.6123  time=13.3s
+[head] ep 03  val‑loss 0.6028  time=13.3s
+[head] ep 04  val‑loss 0.6179  time=13.2s
+[head] ep 05  val‑loss 0.5798  time=13.0s
+[head] ep 06  val‑loss 0.5446  time=13.0s
+[head] ep 07  val‑loss 0.5567  time=13.5s
+[head] ep 08  val‑loss 0.5543  time=13.2s
+[head] ep 09  val‑loss 0.5249  time=13.3s
+[head] ep 10  val‑loss 0.5146  time=13.1s
+[head] ep 11  val‑loss 0.5211  time=13.3s
+[head] ep 12  val‑loss 0.5269  time=13.2s
+[head] ep 13  val‑loss 0.4905  time=16.4s
+[head] ep 14  val‑loss 0.4684  time=21.3s
+[head] ep 15  val‑loss 0.4700  time=19.6s
+[head] ep 16  val‑loss 0.4865  time=18.0s
+[head] ep 17  val‑loss 0.4605  time=17.2s
+[head] ep 18  val‑loss 0.4572  time=17.5s
+[head] ep 19  val‑loss 0.4532  time=16.7s
+[head] ep 20  val‑loss 0.4597  time=17.2s
+[head] ep 21  val‑loss 0.4699  time=16.8s
+[head] ep 22  val‑loss 0.4649  time=16.7s
+[head] ep 23  val‑loss 0.4654  time=16.6s
+[head] ep 24  val‑loss 0.4543  time=19.5s
+[head] ep 25  val‑loss 0.4619  time=24.4s
+
+▶  Stage **ft**  (epochs=25, wd=0.0001)
+
+[ft] ep 01  val‑loss 0.2893  time=22.5s
+[ft] ep 02  val‑loss 0.0256  time=15.4s
+[ft] ep 03  val‑loss 0.0166  time=16.4s
+[ft] ep 04  val‑loss 0.0336  time=15.5s
+[ft] ep 05  val‑loss 0.0421  time=13.8s
+[ft] ep 06  val‑loss 0.0533  time=13.6s
+[ft] ep 07  val‑loss 0.0457  time=13.0s
+[ft] ep 08  val‑loss 0.0259  time=13.8s
+[ft] ep 09  val‑loss 0.0253  time=13.4s
+[ft] ep 10  val‑loss 0.0372  time=13.2s
+[ft] ep 11  val‑loss 0.0334  time=13.4s
+[ft] ep 12  val‑loss 0.0549  time=13.3s
+[ft] ep 13  val‑loss 0.0364  time=13.5s
+↯  early‑stopping this stage
+
+◎  chosen threshold = 0.10
+val‑loss=0.017  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 1.000
+acc    : 1.000
+prec   : 1.000
+rec    : 1.000
+f1     : 1.000
+
+| # | **model** | `--finetune`<br>(unfreeze layer 4) | `--drop` | `--wd` | `--temp` | epochs / patience |
+---------------------------------------------------------------------------------------------------------
+| 4 | r3d       | yes                                |  —       | 1 e‑4  | **on**   | 25 / 10           |
+python train_regularized.py --model r3d --finetune --wd 1e-4  --epochs 50 --temp --patience 10
+
+▶  Stage **head**  (epochs=25, wd=0.0001)
+
+[head] ep 01  val‑loss 0.6455  time=13.0s
+[head] ep 02  val‑loss 0.6123  time=13.2s
+[head] ep 03  val‑loss 0.6028  time=13.4s
+[head] ep 04  val‑loss 0.6179  time=13.4s
+[head] ep 05  val‑loss 0.5798  time=13.1s
+[head] ep 06  val‑loss 0.5446  time=13.3s
+[head] ep 07  val‑loss 0.5567  time=13.2s
+[head] ep 08  val‑loss 0.5543  time=13.0s
+[head] ep 09  val‑loss 0.5249  time=13.3s
+[head] ep 10  val‑loss 0.5146  time=13.2s
+[head] ep 11  val‑loss 0.5211  time=13.4s
+[head] ep 12  val‑loss 0.5269  time=13.0s
+[head] ep 13  val‑loss 0.4905  time=13.4s
+[head] ep 14  val‑loss 0.4684  time=13.4s
+[head] ep 15  val‑loss 0.4700  time=13.7s
+[head] ep 16  val‑loss 0.4865  time=13.0s
+[head] ep 17  val‑loss 0.4605  time=13.2s
+[head] ep 18  val‑loss 0.4572  time=13.4s
+[head] ep 19  val‑loss 0.4532  time=13.2s
+[head] ep 20  val‑loss 0.4597  time=13.6s
+[head] ep 21  val‑loss 0.4699  time=13.2s
+[head] ep 22  val‑loss 0.4649  time=13.1s
+[head] ep 23  val‑loss 0.4654  time=13.1s
+[head] ep 24  val‑loss 0.4543  time=13.3s
+[head] ep 25  val‑loss 0.4619  time=13.4s
+
+▶  Stage **ft**  (epochs=25, wd=0.0001)
+
+[ft] ep 01  val‑loss 0.2893  time=13.2s
+[ft] ep 02  val‑loss 0.0256  time=13.3s
+[ft] ep 03  val‑loss 0.0166  time=13.2s
+[ft] ep 04  val‑loss 0.0336  time=13.2s
+[ft] ep 05  val‑loss 0.0421  time=13.4s
+[ft] ep 06  val‑loss 0.0533  time=13.6s
+[ft] ep 07  val‑loss 0.0457  time=13.1s
+[ft] ep 08  val‑loss 0.0259  time=13.4s
+[ft] ep 09  val‑loss 0.0253  time=13.4s
+[ft] ep 10  val‑loss 0.0372  time=13.1s
+[ft] ep 11  val‑loss 0.0334  time=13.3s
+[ft] ep 12  val‑loss 0.0549  time=13.4s
+[ft] ep 13  val‑loss 0.0364  time=13.3s
+↯  early‑stopping this stage
+>> optimal T = 0.482
+✓  temperature scaling applied  (T = 0.48)
+
+◎  chosen threshold = 0.05
+val‑loss=0.001  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 1.000
+acc    : 1.000
+prec   : 1.000
+rec    : 1.000
+f1     : 1.000
+
+| # | **model** | `--finetune`<br>(unfreeze layer 4) | `--drop` | `--wd` | `--temp` | epochs / patience |
+---------------------------------------------------------------------------------------------------------
+| 5 | r3d       | yes                                |  —       | 5 e‑5  | **on**   | 25 / 10           |
+python train_regularized.py --model r3d --finetune --wd 5e-5  --epochs 50 --temp --patience 10
+C:\Users\zhams\OneDrive\Desktop\ASD-Screening-TransferLearning\asd\Lib\site-packages\torchvision\models\_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=R3D_18_Weights.KINETICS400_V1`. You can also use `weights=R3D_18_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+
+▶  Stage **head**  (epochs=25, wd=5e-05)
+
+[head] ep 01  val‑loss 0.6455  time=13.1s
+[head] ep 02  val‑loss 0.6123  time=13.0s
+[head] ep 03  val‑loss 0.6028  time=13.4s
+[head] ep 04  val‑loss 0.6179  time=13.2s
+[head] ep 05  val‑loss 0.5798  time=13.0s
+[head] ep 06  val‑loss 0.5446  time=13.0s
+[head] ep 07  val‑loss 0.5567  time=13.5s
+[head] ep 08  val‑loss 0.5543  time=13.4s
+[head] ep 09  val‑loss 0.5249  time=13.0s
+[head] ep 10  val‑loss 0.5146  time=13.0s
+[head] ep 11  val‑loss 0.5211  time=13.4s
+[head] ep 12  val‑loss 0.5269  time=13.1s
+[head] ep 13  val‑loss 0.4905  time=13.3s
+[head] ep 14  val‑loss 0.4684  time=13.1s
+[head] ep 15  val‑loss 0.4700  time=13.4s
+[head] ep 16  val‑loss 0.4865  time=13.0s
+[head] ep 17  val‑loss 0.4605  time=13.4s
+[head] ep 18  val‑loss 0.4572  time=13.4s
+[head] ep 19  val‑loss 0.4532  time=13.1s
+[head] ep 20  val‑loss 0.4597  time=13.1s
+[head] ep 21  val‑loss 0.4699  time=13.1s
+[head] ep 22  val‑loss 0.4649  time=13.1s
+[head] ep 23  val‑loss 0.4654  time=13.2s
+[head] ep 24  val‑loss 0.4543  time=13.0s
+[head] ep 25  val‑loss 0.4619  time=13.5s
+
+▶  Stage **ft**  (epochs=25, wd=5e-05)
+
+[ft] ep 01  val‑loss 0.2891  time=13.4s
+[ft] ep 02  val‑loss 0.0256  time=13.2s
+[ft] ep 03  val‑loss 0.0166  time=13.4s
+[ft] ep 04  val‑loss 0.0336  time=13.4s
+[ft] ep 05  val‑loss 0.0422  time=13.1s
+[ft] ep 06  val‑loss 0.0536  time=13.6s
+[ft] ep 07  val‑loss 0.0455  time=13.1s
+[ft] ep 08  val‑loss 0.0257  time=13.4s
+[ft] ep 09  val‑loss 0.0251  time=13.1s
+[ft] ep 10  val‑loss 0.0367  time=13.1s
+[ft] ep 11  val‑loss 0.0327  time=13.1s
+[ft] ep 12  val‑loss 0.0541  time=13.3s
+[ft] ep 13  val‑loss 0.0356  time=13.3s
+↯  early‑stopping this stage
+>> optimal T = 0.482
+✓  temperature scaling applied  (T = 0.48)
+
+◎  chosen threshold = 0.05
+val‑loss=0.001  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 1.000
+acc    : 1.000
+prec   : 1.000
+rec    : 1.000
+f1     : 1.000
+
+| # | **model** | `--finetune`<br>(unfreeze layer 4) | `--drop` | `--wd` | `--temp` | epochs / patience |
+---------------------------------------------------------------------------------------------------------
+| 6 | r3d       | yes                                |  —       | 5 e‑4  | **on**   | 25 / 10           |
+python train_regularized.py --model r3d --finetune --wd 5e-4  --epochs 50 --temp --patience 10
+
+▶  Stage **head**  (epochs=25, wd=0.0005)
+
+[head] ep 01  val‑loss 0.6455  time=13.0s
+[head] ep 02  val‑loss 0.6123  time=13.1s
+[head] ep 03  val‑loss 0.6028  time=13.0s
+[head] ep 04  val‑loss 0.6179  time=13.2s
+[head] ep 05  val‑loss 0.5798  time=13.3s
+[head] ep 06  val‑loss 0.5446  time=13.3s
+[head] ep 07  val‑loss 0.5567  time=13.1s
+[head] ep 08  val‑loss 0.5543  time=12.9s
+[head] ep 09  val‑loss 0.5249  time=13.0s
+[head] ep 10  val‑loss 0.5146  time=13.2s
+[head] ep 11  val‑loss 0.5211  time=13.2s
+[head] ep 12  val‑loss 0.5269  time=13.1s
+[head] ep 13  val‑loss 0.4905  time=13.0s
+[head] ep 14  val‑loss 0.4684  time=13.0s
+[head] ep 15  val‑loss 0.4700  time=13.6s
+[head] ep 16  val‑loss 0.4865  time=13.0s
+[head] ep 17  val‑loss 0.4605  time=13.3s
+[head] ep 18  val‑loss 0.4572  time=13.4s
+[head] ep 19  val‑loss 0.4532  time=13.0s
+[head] ep 20  val‑loss 0.4597  time=13.1s
+[head] ep 21  val‑loss 0.4699  time=13.0s
+[head] ep 22  val‑loss 0.4649  time=13.0s
+[head] ep 23  val‑loss 0.4654  time=13.2s
+[head] ep 24  val‑loss 0.4543  time=13.3s
+[head] ep 25  val‑loss 0.4619  time=13.4s
+
+▶  Stage **ft**  (epochs=25, wd=0.0005)
+
+[ft] ep 01  val‑loss 0.2896  time=13.6s
+[ft] ep 02  val‑loss 0.0257  time=13.6s
+[ft] ep 03  val‑loss 0.0166  time=13.3s
+[ft] ep 04  val‑loss 0.0335  time=22.2s
+[ft] ep 05  val‑loss 0.0423  time=13.5s
+[ft] ep 06  val‑loss 0.0535  time=13.5s
+[ft] ep 07  val‑loss 0.0454  time=13.2s
+[ft] ep 08  val‑loss 0.0260  time=13.6s
+[ft] ep 09  val‑loss 0.0253  time=13.2s
+[ft] ep 10  val‑loss 0.0372  time=13.2s
+[ft] ep 11  val‑loss 0.0334  time=13.2s
+[ft] ep 12  val‑loss 0.0548  time=13.2s
+[ft] ep 13  val‑loss 0.0364  time=13.4s
+↯  early‑stopping this stage
+>> optimal T = 0.482
+✓  temperature scaling applied  (T = 0.48)
+
+◎  chosen threshold = 0.05
+val‑loss=0.001  val‑AUC=1.000
+
+=== TEST metrics ===
+auc    : 1.000
+acc    : 1.000
+prec   : 1.000
+rec    : 1.000
+f1     : 1.000
+
+
+| # | unfreeze layer4 | weight‑decay | TS | best VAL‑loss | best TEST AUC | TEST Acc  | TEST F1   | comment                            |
+| - | --------------- | ------------ | -- | ------------- | ------------- | --------- | --------- | ---------------------------------- |
+| 1 | **no**          | 1e‑4         | ✗  | **0.453**     | 0.983         | 0.909     | 0.917     | head‑only, 25 ep                   |
+| 2 | no              | 1e‑4         | ✓  | 0.350         | 0.983         | 0.909     | 0.917     | TS improved calibration            |
+| 3 | **yes**         | 1e‑4         | ✗  | 0.017         | **1.000**     | **1.000** | **1.000** | light fine‑tune wins               |
+| 4 | yes             | 1e‑4         | ✓  | **0.001**     | 1.000         | 1.000     | 1.000     | best overall, T≈0.48               |
+| 5 | yes             | 5e‑5         | ✓  | 0.001         | 1.000         | 1.000     | 1.000     | wd not sensitive                   |
+| 6 | yes             | 5e‑4         | ✓  | 0.001         | 1.000         | 1.000     | 1.000     | over‑regularised but still perfect |
