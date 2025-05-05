@@ -1,7 +1,9 @@
 # ── src/data_cached.py ───────────────────────────────────────────────────────
 import numpy as np, torch, random
+import functools
 from torch.utils.data import TensorDataset, DataLoader
 from torchvision import transforms
+from torchvision.transforms import ToPILImage
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD  = [0.229, 0.224, 0.225]
@@ -44,32 +46,51 @@ def _normalize_tensor(video_5d):
 # ---------------------------------------------------------------------------#
 # 2.  Ready‑made DataLoader builders
 # ---------------------------------------------------------------------------#
-def make_train_loader(batch_size, aug_p=0.5, target_size=(224,224), shuffle=True):
-    ds = load_split("train")
+def _train_collate(batch, frame_aug=None, aug_p=0.5):
+    vids, lbls = zip(*batch)
+    out = []
+    to_pil = ToPILImage()  
+    for v in vids:
+        if frame_aug is not None and random.random() < aug_p:
+            frs = [frame_aug(to_pil(v[:, t]))       # convert → PIL → aug
+                   for t in range(v.shape[1])]
+            v   = torch.stack(frs, dim=1)
+        else:
+            v = _normalize_tensor(v)
+        out.append(v)
+    return torch.stack(out), torch.stack(lbls)
+
+
+def make_train_loader(batch_size,
+                      aug_p=0.5,
+                      target_size=(224, 224),
+                      shuffle=True,
+                      num_workers=4):
+    ds        = load_split("train")
     frame_aug = build_frame_aug(target_size)
+    collate   = functools.partial(_train_collate,
+                                  frame_aug=frame_aug,
+                                  aug_p=aug_p)
+    return DataLoader(ds,
+                      batch_size=batch_size,
+                      shuffle=shuffle,
+                      collate_fn=collate,
+                      num_workers=num_workers,
+                      pin_memory=True)
 
-    def collate(batch):
-        vids, lbls = zip(*batch)                 # tuples of length B
-        aug_vids = []
-        for v in vids:
-            # v: (C,T,H,W) float32 in [0,1]
-            if random.random() < aug_p:
-                # apply augmentation per‑frame
-                frs = [ frame_aug( (v[:,t]*255).byte() ) for t in range(v.shape[1]) ]
-                v   = torch.stack(frs, dim=1)     # back to (C,T,H,W)
-            else:
-                v = _normalize_tensor(v)
-            aug_vids.append(v)
-        return torch.stack(aug_vids), torch.stack(lbls)
+def _eval_collate(batch):
+    vids, lbls = zip(*batch)
+    vids = torch.stack([_normalize_tensor(v) for v in vids])
+    return vids, torch.stack(lbls)
 
-    return DataLoader(ds, batch_size=batch_size, shuffle=shuffle, collate_fn=collate,
-                      num_workers=4, pin_memory=True)
 
-def make_eval_loader(split, batch_size):
+def make_eval_loader(split,
+                     batch_size,
+                     num_workers=4):
     ds = load_split(split)
-    def collate(batch):
-        vids,lbls = zip(*batch)
-        vids = torch.stack([ _normalize_tensor(v) for v in vids ])
-        return vids, torch.stack(lbls)
-    return DataLoader(ds, batch_size=batch_size, shuffle=False,
-                      collate_fn=collate, num_workers=4, pin_memory=True)
+    return DataLoader(ds,
+                      batch_size=batch_size,
+                      shuffle=False,
+                     collate_fn=_eval_collate,
+                      num_workers=num_workers,
+                      pin_memory=True)

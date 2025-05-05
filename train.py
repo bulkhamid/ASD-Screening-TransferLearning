@@ -62,45 +62,69 @@ def eval_split(model, loader, device):
     out["loss"] = np.sum(losses) / len(loader.dataset)
     return out
 
+# ────────────────────────── train_stage ──────────────────────────
 def train_stage(model, tr_loader, vl_loader,
                 epochs, lr, fold, stage, cfg, device):
 
-    opt       = optim.AdamW(filter(lambda p:p.requires_grad, model.parameters()),
-                            lr=lr, weight_decay=cfg.weight_decay)
-    sched     = optim.lr_scheduler.CosineAnnealingLR(opt, epochs, eta_min=1e-6)
-    crit      = nn.BCEWithLogitsLoss()
-    scaler    = GradScaler()
-    best_loss = np.inf;  wait = 0
+    opt    = optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()),
+                         lr=lr, weight_decay=cfg.weight_decay)
+    sched  = optim.lr_scheduler.CosineAnnealingLR(opt, epochs, eta_min=1e-6)
+    crit   = nn.BCEWithLogitsLoss()
+    scaler = GradScaler()
+
+    best_loss = np.inf
+    wait      = 0
     ckpt      = f"checkpoints/{cfg.model}_fold{fold}_{stage}.pth"
     os.makedirs("checkpoints", exist_ok=True)
 
-    for ep in range(1, epochs+1):
-        t0 = time.time();  model.train()
-        for X,y in tr_loader:
-            X,y = X.to(device), y.to(device)
+    for ep in range(1, epochs + 1):
+        tic = time.time()               # ── start timer ──
+
+        # ── training loop ────────────────────────────────────────────────
+        model.train()
+        for X, y in tr_loader:
+            X, y = X.to(device), y.to(device)
             opt.zero_grad(set_to_none=True)
             with autocast(device_type=device.type):
                 loss = crit(model(X), y)
-            scaler.scale(loss).backward();  scaler.step(opt);  scaler.update()
+            scaler.scale(loss).backward()
+            scaler.step(opt)
+            scaler.update()
         sched.step()
 
+        # ── evaluation ──────────────────────────────────────────────────
         tr = eval_split(model, tr_loader, device)
         vl = eval_split(model, vl_loader, device)
-        wandb.log({f"fold{fold}/{stage}/epoch":ep,
-                   f"fold{fold}/{stage}/train_loss":tr["loss"],
-                   f"fold{fold}/{stage}/val_loss":  vl["loss"],
-                   f"fold{fold}/{stage}/val_auc":   vl["auc"],
-                   f"fold{fold}/{stage}/epoch_time":time.time()-t0})
 
+        epoch_time = time.time() - tic   # ── stop timer ──
+
+        # ── W&B + console log ───────────────────────────────────────────
+        wandb.log({
+            f"fold{fold}/{stage}/epoch":       ep,
+            f"fold{fold}/{stage}/train_loss":  tr["loss"],
+            f"fold{fold}/{stage}/val_loss":    vl["loss"],
+            f"fold{fold}/{stage}/val_auc":     vl["auc"],
+            f"fold{fold}/{stage}/epoch_time":  epoch_time,
+        })
+
+        print(f"[Fold {fold}][{stage}] "
+              f"ep {ep:03d}  "
+              f"train={tr['loss']:.4f}  "
+              f"val={vl['loss']:.4f}  "
+              f"AUC={vl['auc']:.3f}  "
+              f"time={epoch_time:.1f}s")
+
+        # ── early stop ──────────────────────────────────────────────────
         if vl["loss"] < best_loss:
             best_loss, wait = vl["loss"], 0
             torch.save(model.state_dict(), ckpt)
         else:
             wait += 1
             if wait >= cfg.patience:
-                print(f"→ Early stop fold{fold} {stage} @ epoch {ep}")
+                print(f"→ Early stop fold {fold} {stage} @ epoch {ep}")
                 break
 
+    # reload best weights
     model.load_state_dict(torch.load(ckpt, map_location=device))
 
 # ─────────────────────────── main ────────────────────────────────────────────
@@ -109,7 +133,7 @@ def main():
     p.add_argument("--data_path", default=r"C:\Users\zhams\HWs\Autsim")
     p.add_argument("--model", required=True, choices=["simple3dlstm","r3d"])
     p.add_argument("--max_frames", type=int, default=60)
-    p.add_argument("--target_size", nargs=2, type=int, default=[224,224])
+    p.add_argument("--target_size", nargs=2, type=int, default=[112,112])
     p.add_argument("--batch_size", type=int, default=16)
     p.add_argument("--epochs_head", type=int, default=30)
     p.add_argument("--epochs_ft",   type=int, default=50)

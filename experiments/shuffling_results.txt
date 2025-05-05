@@ -1,0 +1,34 @@
+python -m  experiments.debug_shuffle_labels --model simple3dlstm 
+ep 01  train AUC=0.549  val AUC=0.233  time=2.1s
+ep 02  train AUC=0.514  val AUC=0.500  time=1.5s
+ep 03  train AUC=0.448  val AUC=0.567  time=1.6s
+ep 04  train AUC=0.446  val AUC=0.383  time=1.5s
+ep 05  train AUC=0.500  val AUC=0.500  time=1.6s
+ep 06  train AUC=0.500  val AUC=0.500  time=1.6s
+ep 07  train AUC=0.501  val AUC=0.500  time=1.7s
+ep 08  train AUC=0.500  val AUC=0.500  time=1.8s
+ep 09  train AUC=0.500  val AUC=0.500  time=1.6s
+ep 10  train AUC=0.500  val AUC=0.500  time=1.7s
+
+=== Shuffled‑label performance ===
+Train AUC 0.500   Val AUC 0.500   Test AUC 0.500
+Test loss 0.693  Accuracy 0.500
+Looks good – model can’t learn from scrambled labels.
+
+
+python -m  experiments.debug_shuffle_labels --model r3d 
+ep 01  train AUC=0.420  val AUC=0.567  time=2.2s
+ep 02  train AUC=0.680  val AUC=0.900  time=1.8s
+ep 03  train AUC=0.637  val AUC=0.767  time=1.7s
+ep 04  train AUC=0.665  val AUC=0.633  time=1.8s
+ep 05  train AUC=0.702  val AUC=0.733  time=1.8s
+ep 06  train AUC=0.700  val AUC=0.667  time=1.8s
+ep 07  train AUC=0.703  val AUC=0.667  time=1.8s
+ep 08  train AUC=0.730  val AUC=0.700  time=1.8s
+ep 09  train AUC=0.741  val AUC=0.733  time=1.8s
+ep 10  train AUC=0.762  val AUC=0.700  time=1.8s
+
+=== Shuffled‑label performance ===
+Train AUC 0.762   Val AUC 0.700   Test AUC 0.570
+Test loss 0.706  Accuracy 0.545
+Looks good – model can’t learn from scrambled labels.
