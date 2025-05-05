@@ -495,3 +495,115 @@ TEST  AUC=1.000  F1=1.000  loss=0.0000
 ↯  early‑stopping ft
 >> optimal T = 0.509
 TEST  AUC=1.000  F1=1.000  loss=0.0000
+
+==== Fold 5 ====
+C:\Users\zhams\OneDrive\Desktop\ASD-Screening-TransferLearning\asd\Lib\site-packages\torchvision\models\_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=R3D_18_Weights.KINETICS400_V1`. You can also use `weights=R3D_18_Weights.DEFAULT` to get the most up-to-date weights.
+  warnings.warn(msg)
+[Fold 5][head] ep 001  train=0.6692  val=0.7224  valAUC=0.433  time=30.0s
+[Fold 5][head] ep 002  train=0.6370  val=0.6927  valAUC=0.500  time=30.5s
+[Fold 5][head] ep 003  train=0.6149  val=0.6646  valAUC=0.833  time=29.8s
+[Fold 5][head] ep 004  train=0.5772  val=0.6098  valAUC=0.867  time=29.2s
+[Fold 5][head] ep 005  train=0.5380  val=0.5985  valAUC=0.900  time=28.6s
+[Fold 5][head] ep 006  train=0.5119  val=0.5903  valAUC=0.900  time=28.9s
+[Fold 5][head] ep 007  train=0.4943  val=0.5736  valAUC=0.933  time=29.8s
+[Fold 5][head] ep 008  train=0.4824  val=0.5586  valAUC=0.967  time=29.6s
+[Fold 5][head] ep 009  train=0.4747  val=0.5558  valAUC=0.933  time=28.9s
+[Fold 5][head] ep 010  train=0.4386  val=0.5421  valAUC=1.000  time=32.0s
+[Fold 5][head] ep 011  train=0.4608  val=0.5437  valAUC=1.000  time=29.1s
+[Fold 5][head] ep 012  train=0.4241  val=0.5022  valAUC=1.000  time=27.6s
+[Fold 5][head] ep 013  train=0.4224  val=0.4963  valAUC=1.000  time=28.3s
+[Fold 5][head] ep 014  train=0.4250  val=0.4932  valAUC=1.000  time=27.8s
+[Fold 5][head] ep 015  train=0.3991  val=0.4967  valAUC=1.000  time=28.4s
+[Fold 5][head] ep 016  train=0.4137  val=0.4924  valAUC=1.000  time=27.5s
+[Fold 5][head] ep 017  train=0.4081  val=0.4961  valAUC=1.000  time=27.5s
+[Fold 5][head] ep 018  train=0.4102  val=0.4816  valAUC=1.000  time=27.5s
+[Fold 5][head] ep 019  train=0.3889  val=0.4731  valAUC=1.000  time=28.2s
+[Fold 5][head] ep 020  train=0.4054  val=0.4811  valAUC=1.000  time=30.4s
+[Fold 5][head] ep 021  train=0.3993  val=0.4793  valAUC=1.000  time=33.6s
+[Fold 5][head] ep 022  train=0.3875  val=0.4640  valAUC=1.000  time=30.0s
+[Fold 5][head] ep 023  train=0.3954  val=0.4858  valAUC=1.000  time=29.9s
+[Fold 5][head] ep 024  train=0.4024  val=0.4789  valAUC=1.000  time=28.6s
+[Fold 5][head] ep 025  train=0.3680  val=0.4834  valAUC=1.000  time=30.3s
+[Fold 5][ft] ep 001  train=0.0954  val=0.2596  valAUC=1.000  time=29.9s
+[Fold 5][ft] ep 002  train=0.0132  val=0.2036  valAUC=1.000  time=30.2s
+[Fold 5][ft] ep 003  train=0.0044  val=0.1435  valAUC=1.000  time=29.9s
+[Fold 5][ft] ep 004  train=0.0107  val=0.1447  valAUC=1.000  time=31.5s
+[Fold 5][ft] ep 005  train=0.0169  val=0.0355  valAUC=1.000  time=31.3s
+[Fold 5][ft] ep 006  train=0.0034  val=0.0450  valAUC=1.000  time=30.8s
+[Fold 5][ft] ep 007  train=0.0084  val=0.0176  valAUC=1.000  time=31.1s
+[Fold 5][ft] ep 008  train=0.0086  val=0.0134  valAUC=1.000  time=31.2s
+[Fold 5][ft] ep 009  train=0.0137  val=0.0195  valAUC=1.000  time=30.7s
+[Fold 5][ft] ep 010  train=0.0006  val=0.0177  valAUC=1.000  time=31.5s
+[Fold 5][ft] ep 011  train=0.0005  val=0.0165  valAUC=1.000  time=31.3s
+[Fold 5][ft] ep 012  train=0.0014  val=0.0293  valAUC=1.000  time=31.5s
+[Fold 5][ft] ep 013  train=0.0010  val=0.0267  valAUC=1.000  time=30.9s
+[Fold 5][ft] ep 014  train=0.0009  val=0.0192  valAUC=1.000  time=30.7s
+[Fold 5][ft] ep 015  train=0.0007  val=0.0225  valAUC=1.000  time=32.0s
+[Fold 5][ft] ep 016  train=0.0007  val=0.0166  valAUC=1.000  time=30.5s
+[Fold 5][ft] ep 017  train=0.0007  val=0.0179  valAUC=1.000  time=30.8s
+[Fold 5][ft] ep 018  train=0.0006  val=0.0173  valAUC=1.000  time=30.2s
+↯  early‑stopping ft
+>> optimal T = 0.542
+TEST  AUC=1.000  F1=1.000  loss=0.0002
+
+==== 5‑fold summary ====
+auc      : 1.000 ± 0.000
+accuracy : 1.000 ± 0.000
+precision: 1.000 ± 0.000
+recall   : 1.000 ± 0.000
+f1       : 1.000 ± 0.000
+loss     : 0.000 ± 0.000
+
+wandb: Run summary:
+wandb:      cv_mean_accuracy 1
+wandb:           cv_mean_auc 1
+wandb:            cv_mean_f1 1
+wandb:          cv_mean_loss 5e-05
+wandb:     cv_mean_precision 1
+wandb:        cv_mean_recall 1
+wandb:       cv_std_accuracy 0
+wandb:            cv_std_auc 0
+wandb:             cv_std_f1 0
+wandb:           cv_std_loss 7e-05
+wandb:      cv_std_precision 0
+wandb:         cv_std_recall 0
+wandb:        fold1/ft/epoch 25
+wandb:   fold1/ft/train_loss 0.00084
+wandb:      fold1/ft/val_auc 1
+wandb:     fold1/ft/val_loss 0.02195
+wandb:      fold1/head/epoch 25
+wandb: fold1/head/train_loss 0.40187
+wandb:    fold1/head/val_auc 0.96667
+wandb:   fold1/head/val_loss 0.48011
+wandb:        fold2/ft/epoch 13
+wandb:   fold2/ft/train_loss 0.0011
+wandb:      fold2/ft/val_auc 1
+wandb:     fold2/ft/val_loss 0.05698
+wandb:      fold2/head/epoch 25
+wandb: fold2/head/train_loss 0.35038
+wandb:    fold2/head/val_auc 1
+wandb:   fold2/head/val_loss 0.44072
+wandb:        fold3/ft/epoch 13
+wandb:   fold3/ft/train_loss 0.00153
+wandb:      fold3/ft/val_auc 1
+wandb:     fold3/ft/val_loss 0.02801
+wandb:      fold3/head/epoch 25
+wandb: fold3/head/train_loss 0.38768
+wandb:    fold3/head/val_auc 1
+wandb:   fold3/head/val_loss 0.44601
+wandb:        fold4/ft/epoch 14
+wandb:   fold4/ft/train_loss 0.00067
+wandb:      fold4/ft/val_auc 1
+wandb:     fold4/ft/val_loss 0.01164
+wandb:      fold4/head/epoch 25
+wandb: fold4/head/train_loss 0.4456
+wandb:    fold4/head/val_auc 1
+wandb:   fold4/head/val_loss 0.49153
+wandb:        fold5/ft/epoch 18
+wandb:   fold5/ft/train_loss 0.00061
+wandb:      fold5/ft/val_auc 1
+wandb:     fold5/ft/val_loss 0.0173
+wandb:      fold5/head/epoch 25
+wandb: fold5/head/train_loss 0.36797
+wandb:    fold5/head/val_auc 1
+wandb:   fold5/head/val_loss 0.48337
