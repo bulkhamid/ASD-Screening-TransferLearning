@@ -206,7 +206,7 @@ This is the main script for training models using either cross-validation or a h
 * `--model`: Choose the model (`simple3dlstm` or `r3d`). (Required)
 * `--data_path`: Path to the directory containing raw videos or the generated `.npz` files (defaults to `data/`).
 * `--cached`: Use pre-processed `.npz` files (requires running `save_numpy_dataset.py` first).
-* `--cv`: Perform 5-fold Group Cross-Validation (default is True in the script). Use `--no-cv` or similar based on argparse implementation if you want hold-out.
+* `--cv`: Perform 5-fold Group Cross-Validation (default is True in the script).
 * `--splits`: Number of CV splits (default: 5).
 * `--batch_size`: Training batch size (default: 8).
 * `--epochs`: Total number of epochs (default: 50). For R3D, this is split between head-only and fine-tuning stages if `--finetune` is used.
@@ -225,8 +225,8 @@ This is the main script for training models using either cross-validation or a h
 python train.py --model simple3dlstm --cached --cv --temp --epochs 50 --patience 10 --batch_size 8
 
 # Train R3D (head-only) using a single hold-out split with cached data
-# (Assuming --cv is default True, you might need to add a flag like --no-cv if implemented, or modify the script default)
-python train.py --model r3d --cached --no-cv --epochs 50 --patience 10 --batch_size 8 # Add --no-cv if needed
+# (--cv is default True, ih you skip this argument by default it is set for a single hold-out split)
+python train.py --model r3d --cached --epochs 50 --patience 10 --batch_size 8 # 
 
 # Train R3D with fine-tuning using 5-fold CV with cached data and temperature scaling
 python train.py --model r3d --cached --cv --finetune --temp --epochs 50 --patience 10 --batch_size 8
@@ -277,7 +277,26 @@ Several experiments have been conducted and logged in the `experiments/` directo
 
 * **Cross-Validation Performance (`experiments/train results`):**
     * **`Simple3DLSTM`:** Achieved strong performance with 5-fold CV using cached data, resulting in a mean Test AUC of 1.000 ± 0.000 and F1-score of 0.991 ± 0.017. Temperature scaling was applied.
+    ```
+    ==== 5‑fold summary ====
+    auc      : 1.000 ± 0.000
+    accuracy : 0.991 ± 0.018
+    precision: 0.983 ± 0.033
+    recall   : 1.000 ± 0.000
+    f1       : 0.991 ± 0.017
+    loss     : 0.079 ± 0.159
+    ```
+
     * **`R3D (Fine-tuned)`:** Also demonstrated excellent performance with 5-fold CV using cached data and fine-tuning, achieving perfect mean Test metrics (AUC=1.0, F1=1.0, Acc=1.0) across folds. Temperature scaling was applied.
+    ```
+    ==== 5‑fold summary ====
+    auc      : 1.000 ± 0.000
+    accuracy : 1.000 ± 0.000
+    precision: 1.000 ± 0.000
+    recall   : 1.000 ± 0.000
+    f1       : 1.000 ± 0.000
+    loss     : 0.000 ± 0.000
+    ```
 
 * **Regularization Effects (`experiments/reg_results_*.txt`):**
     * For **`R3D`**, fine-tuning (`--finetune`) significantly boosted performance compared to head-only training, reaching perfect test scores on the hold-out split used in these experiments. Temperature scaling (`--temp`) consistently improved calibration (lower validation loss after scaling) without hurting discriminative performance (AUC). Performance was robust across tested weight decay values (`1e-4`, `5e-5`, `5e-4`) when fine-tuning.
