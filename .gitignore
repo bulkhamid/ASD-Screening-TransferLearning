@@ -31,3 +31,8 @@ src/models/results/
 *.pt
 
 data/*.npz
+
+# Backup files
+*.bak
+*_old.py
+*_backup.py
