@@ -34,21 +34,24 @@ Early detection of Autism Spectrum Disorder (ASD) is crucial for timely interven
 
 * **Models Implemented:**
     * `Simple3DLSTM`: A custom model combining 3D CNN layers for spatial feature extraction across time and an LSTM layer for temporal sequence modeling. Includes optional 3D dropout.
-    * `PretrainedR3D`: Utilizes a ResNet-based 3D CNN (R3D-18) pre-trained on the Kinetics-400 action recognition dataset, adapted for binary classification. Supports head-only training and fine-tuning (unfreezing deeper layers).
+    * `Simple2DLSTM`: **[NEW]** A custom model using 2D CNN layers applied per-frame followed by LSTM for temporal modeling. More efficient than 3D CNN (6.5M vs 6.7M parameters) and recommended for general use.
+    * `PretrainedR3D`: Utilizes a ResNet-based 3D CNN (R3D-18) pre-trained on the Kinetics-400 action recognition dataset, adapted for binary classification. **[UPDATED]** Now supports full network fine-tuning with gradual learning rate reduction (1e-5) for better transfer learning.
 * **Data Handling:**
     * Supports training directly from raw video files (`.mp4`, `.webm`, `.avi`).
     * Supports training from pre-processed, cached `.npz` tensors for faster experimentation.
+    * **[NEW]** Aspect ratio preservation: When resizing frames from original size (e.g., 1280x720) to target size (112x112), the aspect ratio is preserved using padding instead of distortion.
     * Includes a script (`data/save_numpy_dataset.py`) for preprocessing raw videos into `.npz` files, featuring:
         * **Deduplication:** Uses SHA1 hashing on the first 1MB of video files to detect and handle exact duplicates, preventing data leakage across splits. Reports conflicting duplicates (same video, different labels).
         * **Frame Sampling/Padding:** Selects a fixed number of frames (`MAX_FRAMES`) randomly or uses all frames if fewer exist, padding if necessary.
         * **Splitting:** Creates stratified train/validation/test splits (approx. 70%/10%/20%).
 * **Training Strategies:**
-    * **Cross-Validation:** Supports 5-fold `GroupKFold` cross-validation, ensuring subjects are not split across train/validation/test sets within a fold (`train.py --cv`).
-    * **Hold-Out Validation:** Supports a single 70%/10%/20% train/validation/test split (`train.py` default).
+    * **Hold-Out Validation:** Default mode uses a single 70%/10%/20% train/validation/test split for faster training (`train.py` default).
+    * **Cross-Validation:** Optional 5-fold `GroupKFold` cross-validation available with `--cv` flag, ensuring subjects are not split across train/validation/test sets within a fold.
+    * **Extended Training:** **[UPDATED]** Default epochs increased to 100 (from 50) for better convergence.
     * **Optimization:** Uses AdamW optimizer with Cosine Annealing learning rate scheduler.
     * **Mixed Precision:** Leverages Automatic Mixed Precision (AMP) via `torch.amp` and `GradScaler` for faster training and reduced memory usage.
-    * **Regularization:** Includes weight decay (AdamW) and optional 3D Dropout (for `Simple3DLSTM`).
-    * **Early Stopping:** Monitors validation loss and stops training if no improvement is seen after a defined patience (`--patience`), saving the best model checkpoint.
+    * **Regularization:** Includes weight decay (AdamW) and optional 2D/3D Dropout.
+    * **Early Stopping:** Monitors validation loss and stops training if no improvement is seen after a defined patience (`--patience`, default: 10 epochs), saving the best model checkpoint.
 * **Evaluation & Calibration:**
     * **Metrics:** Computes standard classification metrics (AUC, Accuracy, Precision, Recall, F1-Score, BCE Loss).
     * **Thresholding:** Automatically selects the optimal classification threshold based on the best F1-score achieved on the validation set.
@@ -203,40 +206,42 @@ This is the main script for training models using either cross-validation or a h
 
 **Common Arguments:**
 
-* `--model`: Choose the model (`simple3dlstm` or `r3d`). (Required)
+* `--model`: Choose the model (`simple3dlstm`, `simple2dlstm`, or `r3d`). (Required)
 * `--data_path`: Path to the directory containing raw videos or the generated `.npz` files (defaults to `data/`).
 * `--cached`: Use pre-processed `.npz` files (requires running `save_numpy_dataset.py` first).
-* `--cv`: Perform 5-fold Group Cross-Validation (default is True in the script).
+* `--cv`: Perform 5-fold Group Cross-Validation (default is **False** - uses holdout split).
 * `--splits`: Number of CV splits (default: 5).
 * `--batch_size`: Training batch size (default: 8).
-* `--epochs`: Total number of epochs (default: 50). For R3D, this is split between head-only and fine-tuning stages if `--finetune` is used.
+* `--epochs`: Total number of epochs (default: **100**). For R3D, this is split between head-only training (1/3) and full network fine-tuning (2/3).
 * `--patience`: Epochs to wait for improvement before early stopping (default: 10).
 * `--wd`: Weight decay for AdamW optimizer (default: 1e-4).
 * `--temp`: Enable temperature scaling for calibration.
 * `--max_frames`: Maximum frames to sample per video (default: 60).
-* `--target_size`: Target HxW resolution for frames (default: 112 112).
-* `--finetune`: For `r3d` model, unfreeze `layer4` and `fc` for fine-tuning after the head-only phase.
-* `--drop`: 3D dropout probability for `simple3dlstm` (default: 0.0).
+* `--target_size`: Target HxW resolution for frames (default: 112 112). Frames are resized with aspect ratio preservation.
+* `--drop`: Dropout probability for `simple3dlstm` or `simple2dlstm` (default: 0.0).
 
 **Examples:**
 
 ```bash
-# Train Simple3DLSTM using 5-fold CV with cached data and temperature scaling
-python train.py --model simple3dlstm --cached --cv --temp --epochs 50 --patience 10 --batch_size 8
+# Train Simple2DLSTM (recommended) using holdout split with default settings (100 epochs)
+python train.py --model simple2dlstm
 
-# Train R3D (head-only) using a single hold-out split with cached data
-# (--cv is default True, ih you skip this argument by default it is set for a single hold-out split)
-python train.py --model r3d --cached --epochs 50 --patience 10 --batch_size 8 # 
+# Train Simple2DLSTM with cached data and larger batch size
+python train.py --model simple2dlstm --cached --batch_size 8
 
-# Train R3D with fine-tuning using 5-fold CV with cached data and temperature scaling
-python train.py --model r3d --cached --cv --finetune --temp --epochs 50 --patience 10 --batch_size 8
+# Train R3D with full network fine-tuning (automatic, no --finetune flag needed)
+python train.py --model r3d --batch_size 4
 
-# Train Simple3DLSTM directly from raw videos (slower) with dropout
-# (Assumes raw videos are in 'data/positive' and 'data/negative')
-# python train.py --model simple3dlstm --cv --drop 0.3 --epochs 50 --patience 10 --batch_size 4 --data_path data
+# Train with 5-fold cross-validation (optional)
+python train.py --model simple2dlstm --cv --cached
+
+# Train Simple3DLSTM (legacy) directly from raw videos with dropout
+python train.py --model simple3dlstm --drop 0.3 --batch_size 4
 ```
 - Plots and checkpoints will be saved in `plots/` and `checkpoints/` respectively.
-- Final cross-validation results are printed to the console and logged to `wandb`.
+- Final results are printed to the console and logged to `wandb`.
+
+**📖 For detailed information about recent training improvements, see [TRAINING_IMPROVEMENTS.md](TRAINING_IMPROVEMENTS.md)**
 
 ### 3. Regularization Experiments (experiments/train_regularized.py)
 This script appears tailored for running quick experiments on a single hold-out split using cached data only, focusing on the effects of regularization (weight decay, dropout) and calibration (temperature scaling). It was used to generate the results in `experiments/reg_results_*.txt`.
