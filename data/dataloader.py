@@ -6,6 +6,12 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from sklearn.model_selection import train_test_split
 import random
+import sys
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from src.utils.video_utils import resize_keep_aspect_ratio
 
 # ───────────────────────────── Frame-level augment ────────────────────────────
 def build_frame_aug(target_size):
@@ -58,7 +64,8 @@ class VideoDataset(Dataset):
             if not ret:
                 continue
             fr = cv2.cvtColor(fr, cv2.COLOR_BGR2RGB)
-            fr = cv2.resize(fr, self.target_size)
+            # Use aspect ratio preserving resize
+            fr = resize_keep_aspect_ratio(fr, self.target_size)
             frames.append(fr)
         cap.release()
 

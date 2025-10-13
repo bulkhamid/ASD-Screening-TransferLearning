@@ -4,17 +4,19 @@
 Cross-validated training for ASD video screening.
 
 This script trains deep learning models for autism spectrum disorder (ASD)
-screening from video data. It supports two model architectures:
+screening from video data. It supports three model architectures:
   - Simple3DLSTM: Custom 3D CNN + LSTM architecture with optional dropout
-  - Pre-trained R3D-18: Transfer learning from ResNet3D (head-only or fine-tuned)
+  - Simple2DLSTM: Custom 2D CNN + LSTM architecture with optional dropout (recommended)
+  - Pre-trained R3D-18: Transfer learning from ResNet3D with full network fine-tuning
 
 Key Features
 ------------
-* GroupKFold 5-fold cross-validation (--cv) or 70/10/20 holdout split
+* 70/10/20 holdout split (default) or optional 5-fold GroupKFold cross-validation (--cv)
 * Supports cached .npz tensor files (--cached) or raw video processing
+* Aspect ratio preservation when resizing videos from 1280x720 to 112x112
 * AdamW optimizer with cosine learning rate scheduling
 * Mixed precision training (AMP) for faster training
-* Early stopping with configurable patience
+* Early stopping based on validation loss (default patience: 10 epochs)
 * Temperature scaling calibration (--temp) for better probability estimates
 * Automatic threshold selection based on validation F1 score
 * Generates loss/AUC curves and ROC plots for each fold
@@ -22,11 +24,14 @@ Key Features
 
 Usage Examples
 --------------
-Train Simple3DLSTM with cached data:
-    python train.py --model simple3dlstm --cached --batch_size 8 --epochs 50
+Train Simple2DLSTM with holdout split (recommended):
+    python train.py --model simple2dlstm --batch_size 8 --epochs 100
 
-Train R3D with fine-tuning:
-    python train.py --model r3d --cached --finetune --batch_size 4 --epochs 40
+Train Simple3DLSTM with cached data:
+    python train.py --model simple3dlstm --cached --batch_size 8 --epochs 100
+
+Train R3D with full network fine-tuning:
+    python train.py --model r3d --batch_size 4 --epochs 100
 """
 
 # ---------------------------------------------------------------------------
@@ -63,6 +68,7 @@ import wandb  # Comment out if not needed
 
 # Local imports
 from src.models.simple3dlstm import Simple3DLSTM
+from src.models.simple2dlstm import Simple2DLSTM
 from src.models.pretrained_r3d import PretrainedR3D
 from src.utils.metrics import compute_metrics
 from src.utils.temperature_scaling import TemperatureScaler
@@ -330,8 +336,8 @@ def main():
     # Data and cross-validation arguments
     parser.add_argument("--data_path", default="data",
                         help="Path to data directory")
-    parser.add_argument("--cv", action="store_true", default=True,
-                        help="Use 5-fold GroupKFold cross-validation (default: True)")
+    parser.add_argument("--cv", action="store_true", default=False,
+                        help="Use 5-fold GroupKFold cross-validation (default: False)")
     parser.add_argument("--cached", action="store_true",
                         help="Load pre-processed .npz tensors instead of raw videos")
     parser.add_argument("--splits", type=int, default=5,
@@ -339,18 +345,18 @@ def main():
     
     # Model arguments
     parser.add_argument("--model", required=True,
-                        choices=["simple3dlstm", "r3d"],
+                        choices=["simple3dlstm", "simple2dlstm", "r3d"],
                         help="Model architecture to use")
     parser.add_argument("--finetune", action="store_true",
                         help="Unfreeze layer4 for R3D fine-tuning (ignored for LSTM)")
     parser.add_argument("--drop", type=float, default=0.0,
-                        help="3D dropout probability for Simple3DLSTM (default: 0.0)")
+                        help="Dropout probability for Simple3DLSTM/Simple2DLSTM (default: 0.0)")
     
     # Training arguments
     parser.add_argument("--batch_size", type=int, default=8,
                         help="Batch size (default: 8)")
-    parser.add_argument("--epochs", type=int, default=50,
-                        help="Maximum number of epochs (default: 50)")
+    parser.add_argument("--epochs", type=int, default=100,
+                        help="Maximum number of epochs (default: 100)")
     parser.add_argument("--patience", type=int, default=10,
                         help="Early stopping patience (default: 10)")
     parser.add_argument("--wd", type=float, default=1e-4,
@@ -465,19 +471,29 @@ def main():
                 p_drop=cfg.drop
             ).to(device)
             stages = [dict(name="full", epochs=cfg.epochs, lr=1e-4)]
+        elif cfg.model == "simple2dlstm":
+            model = Simple2DLSTM(
+                cfg.max_frames, tuple(cfg.target_size),
+                p_drop=cfg.drop
+            ).to(device)
+            stages = [dict(name="full", epochs=cfg.epochs, lr=1e-4)]
         else:  # R3D-18
             model = PretrainedR3D().to(device)
-            # Freeze all parameters
+            
+            # Unfreeze the whole network with gradual learning rate reduction
+            # Start with frozen backbone and only train the head
             for p in model.parameters():
                 p.requires_grad_(False)
             model.net.fc.requires_grad_(True)
             
-            stages = [dict(name="head", epochs=cfg.epochs // 2, lr=1e-3)]
-            if cfg.finetune:
-                stages.append(
-                    dict(name="ft", epochs=cfg.epochs // 2, lr=1e-4,
-                         unfreeze=["layer4", "fc"])
-                )
+            # Stage 1: Train only the head with higher learning rate
+            stages = [dict(name="head", epochs=cfg.epochs // 3, lr=1e-3)]
+            
+            # Stage 2: Unfreeze whole network with reduced learning rate
+            stages.append(
+                dict(name="full", epochs=2 * cfg.epochs // 3, lr=1e-5,
+                     unfreeze=["layer1", "layer2", "layer3", "layer4", "fc"])
+            )
 
         # Train in stages
         curves = defaultdict(list)
