@@ -382,8 +382,6 @@ def main():
 
     # Prepare data splits
     if cfg.cached is False:
-    # Prepare data splits
-    if cfg.cached is False:
         paths, labels = gather_video_paths(cfg.data_path)
         subs = np.array([Path(p).stem for p in paths])
 
