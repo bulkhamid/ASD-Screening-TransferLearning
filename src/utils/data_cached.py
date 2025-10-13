@@ -1,22 +1,44 @@
-# ── src/data_cached.py ───────────────────────────────────────────────────────
-import numpy as np, torch, random
+"""
+Cached data loading utilities for pre-processed video tensors.
+
+This module provides efficient data loading from pre-processed .npz files
+with optional augmentation for training. Videos are stored as memory-mapped
+arrays and loaded on-the-fly to minimize memory usage.
+"""
+import numpy as np
+import torch
+import random
 import functools
 from torch.utils.data import TensorDataset, DataLoader
 from torchvision import transforms
 from torchvision.transforms import ToPILImage
 
+# ImageNet normalization constants
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
-IMAGENET_STD  = [0.229, 0.224, 0.225]
+IMAGENET_STD = [0.229, 0.224, 0.225]
 
-# ---------------------------------------------------------------------------#
-# 0.  Helper to load the memory‑mapped .npz split that save_numpy_dataset.py
-#     produced.  Shape on disk = (N,T,H,W,C) uint8.  Returned tensors are
-#     (N,C,T,H,W) float32 in [0,1].
-# ---------------------------------------------------------------------------#
+
+# ---------------------------------------------------------------------------
+# Data Loading
+# ---------------------------------------------------------------------------
 def load_split(split):
-    npz   = np.load(f"data/{split}.npz", mmap_mode="r")
-    vids  = torch.from_numpy(npz["X"]).permute(0,4,1,2,3).float() / 255.
-    labels= torch.from_numpy(npz["y"]).float()
+    """
+    Load a pre-processed split from .npz file.
+    
+    The .npz files are created by data/save_numpy_dataset.py with shape
+    (N, T, H, W, C) in uint8 format. This function loads them as memory-mapped
+    arrays and converts to PyTorch tensors with shape (N, C, T, H, W) in float32.
+    
+    Args:
+        split: Split name ('train', 'val', or 'test')
+    
+    Returns:
+        TensorDataset containing video tensors and labels
+    """
+    npz = np.load(f"data/{split}.npz", mmap_mode="r")
+    # Convert from (N, T, H, W, C) to (N, C, T, H, W) and normalize to [0, 1]
+    vids = torch.from_numpy(npz["X"]).permute(0, 4, 1, 2, 3).float() / 255.0
+    labels = torch.from_numpy(npz["y"]).float()
     return TensorDataset(vids, labels)
 
 # ---------------------------------------------------------------------------#
