@@ -33,10 +33,12 @@ from sklearn.metrics import (f1_score, roc_auc_score, accuracy_score,
                              precision_score, recall_score, roc_curve, auc)
 
 import matplotlib, matplotlib.pyplot as plt
-import wandb                                  # comment‑out if not needed
+
+wandb = None
 
 # local code --------------------------------------------------------------- #
 from src.models.simple3dlstm   import Simple3DLSTM
+from src.models.simple2dcnn    import Simple2DCNN
 from src.models.pretrained_r3d import PretrainedR3D
 from src.utils.metrics         import compute_metrics
 from src.utils.temperature_scaling import TemperatureScaler
@@ -55,6 +57,14 @@ def set_seed(seed: int = 42):
         torch.cuda.manual_seed_all(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark     = False
+
+def wandb_log(enabled, payload):
+    if enabled and wandb is not None:
+        wandb.log(payload)
+
+def wandb_finish(enabled):
+    if enabled and wandb is not None:
+        wandb.finish()
 
 def gather_video_paths(root):
     pos, neg = Path(root) / "positive", Path(root) / "negative"
@@ -128,7 +138,7 @@ def train_stage(model, stage_name, tr_loader, vl_loader,
     scaler = GradScaler()
 
     best_loss, wait = np.inf, 0
-    ckpt = f"checkpoints/{cfg.model}_fold{fold}_{stage_name}.pth"
+    ckpt = f"checkpoints/{cfg.run_prefix}_fold{fold}_{stage_name}.pth"
 
     curve = defaultdict(list)      # for plotting
 
@@ -152,10 +162,10 @@ def train_stage(model, stage_name, tr_loader, vl_loader,
         curve["train_auc"].append(tr_m["auc"]);   curve["val_auc"].append(vl_m["auc"])
 
         # wandb (optional)
-        wandb.log({f"fold{fold}/{stage_name}/train_loss": tr_m["loss"],
-                   f"fold{fold}/{stage_name}/val_loss"  : vl_m["loss"],
-                   f"fold{fold}/{stage_name}/val_auc"   : vl_m["auc"],
-                   f"fold{fold}/{stage_name}/epoch"     : ep})
+        wandb_log(cfg.use_wandb, {f"fold{fold}/{stage_name}/train_loss": tr_m["loss"],
+                                  f"fold{fold}/{stage_name}/val_loss"  : vl_m["loss"],
+                                  f"fold{fold}/{stage_name}/val_auc"   : vl_m["auc"],
+                                  f"fold{fold}/{stage_name}/epoch"     : ep})
 
         print(f"[Fold {fold}][{stage_name}] ep {ep:03d}  "
               f"train={tr_m['loss']:.4f}  val={vl_m['loss']:.4f}  "
@@ -168,7 +178,7 @@ def train_stage(model, stage_name, tr_loader, vl_loader,
         else:
             wait += 1
             if wait >= cfg.patience:
-                print(f"↯  early‑stopping {stage_name}")
+                print(f"early-stopping {stage_name}")
                 break
 
     model.load_state_dict(torch.load(ckpt, map_location=device))
@@ -181,20 +191,32 @@ def main():
     parser = argparse.ArgumentParser()
     # data / cv
     parser.add_argument("--data_path", default="data")
-    parser.add_argument("--cv", action="store_true", default=True,
-                        help="use 5‑fold GroupKFold (default True)")
+    parser.add_argument("--cv", action="store_true", default=False,
+                        help="use 5-fold GroupKFold for raw video input only")
     parser.add_argument("--cached", action="store_true",
-                        help="load pre‑processed .npz tensors")
+                        help="load pre-processed .npz tensors")
     parser.add_argument("--splits", type=int, default=5)
     # model
     parser.add_argument("--model", required=True,
-                        choices=["simple3dlstm", "r3d"])
+                        choices=["simple3dlstm", "simple2dcnn", "r3d"])
     parser.add_argument("--finetune", action="store_true",
                         help="unfreeze layer4 for R3D (ignored for LSTM)")
+    parser.add_argument("--full_finetune", action="store_true",
+                        help="after layer4 fine-tuning, unfreeze the full R3D backbone")
+    parser.add_argument("--full_ft_epochs", type=int, default=8,
+                        help="epochs for full-backbone R3D fine-tuning")
+    parser.add_argument("--full_ft_lr", type=float, default=1e-5,
+                        help="learning rate for full-backbone R3D fine-tuning")
     parser.add_argument("--drop", type=float, default=0.0,
-                        help="3‑D dropout (Simple3DLSTM only)")
+                        help="dropout for Simple3DLSTM/Simple2DCNN")
+    parser.add_argument("--pad_jitter", type=int, default=0,
+                        help="training-only jitter range for gray letterbox padding in cached data")
+    parser.add_argument("--pad_value", type=int, default=128,
+                        help="cached letterbox padding value used for pad_jitter detection")
     # training
     parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--num_workers", type=int, default=0,
+                        help="DataLoader worker processes; use 0 on Windows if multiprocessing is blocked")
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--patience", type=int, default=10)
     parser.add_argument("--wd", type=float,  default=1e-4)
@@ -203,15 +225,36 @@ def main():
     # misc
     parser.add_argument("--max_frames", type=int, default=60)
     parser.add_argument("--target_size", nargs=2, type=int, default=[112, 112])
+    parser.add_argument("--wandb", dest="use_wandb", action="store_true",
+                        help="enable Weights & Biases logging")
+    parser.add_argument("--wandb_project", default="ASD-SubjectCV")
     cfg = parser.parse_args()
+
+    if cfg.cached and cfg.cv:
+        parser.error(
+            "--cached --cv is disabled because the current cache contains one "
+            "fixed train/val/test split, not fold-specific cached splits. "
+            "Use --cached without --cv for hold-out evaluation, or rebuild "
+            "fold-specific caches before running CV."
+        )
+    if cfg.use_wandb:
+        global wandb
+        try:
+            import wandb as wandb_module
+        except ImportError:
+            parser.error("--wandb was requested, but the wandb package is not installed.")
+        wandb = wandb_module
 
     set_seed(42)
     os.makedirs("plots",       exist_ok=True)
     os.makedirs("checkpoints", exist_ok=True)
+    data_name = Path(cfg.data_path).name
+    cfg.run_prefix = f"{data_name}_{cfg.model}" if cfg.cached and data_name != "data" else cfg.model
 
-    wandb.init(project="ASD-SubjectCV",
-               name=f"{cfg.model}_{'cv' if cfg.cv else 'hold'}",
-               config=vars(cfg))
+    if cfg.use_wandb:
+        wandb.init(project=cfg.wandb_project,
+                   name=f"{cfg.model}_{'cv' if cfg.cv else 'hold'}",
+                   config=vars(cfg))
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -248,9 +291,17 @@ def main():
         # loaders ----------------------------------------------------------------
         if cfg.cached:
             tr_loader = make_train_loader(cfg.batch_size,
-                                          target_size=tuple(cfg.target_size))
-            vl_loader = make_eval_loader("val",  cfg.batch_size)
-            te_loader = make_eval_loader("test", cfg.batch_size)
+                                          data_dir=cfg.data_path,
+                                          target_size=tuple(cfg.target_size),
+                                          num_workers=cfg.num_workers,
+                                          pad_jitter=cfg.pad_jitter,
+                                          pad_value=cfg.pad_value)
+            vl_loader = make_eval_loader("val",  cfg.batch_size,
+                                         data_dir=cfg.data_path,
+                                         num_workers=cfg.num_workers)
+            te_loader = make_eval_loader("test", cfg.batch_size,
+                                         data_dir=cfg.data_path,
+                                         num_workers=cfg.num_workers)
         else:
             tr_idx, val_idx, test_idx = splits[fold_idx-1]
             aug = VideoFrameTransform(build_frame_aug(tuple(cfg.target_size)))
@@ -259,20 +310,23 @@ def main():
                                                 cfg.max_frames, tuple(cfg.target_size),
                                                 transform=aug),
                                    batch_size=cfg.batch_size, shuffle=True,
-                                   num_workers=4, pin_memory=True)
+                                   num_workers=cfg.num_workers, pin_memory=True)
             vl_loader = DataLoader(VideoDataset(paths[val_idx], labels[val_idx],
                                                 cfg.max_frames, tuple(cfg.target_size)),
                                    batch_size=cfg.batch_size, shuffle=False,
-                                   num_workers=4, pin_memory=True)
+                                   num_workers=cfg.num_workers, pin_memory=True)
             te_loader = DataLoader(VideoDataset(paths[test_idx], labels[test_idx],
                                                 cfg.max_frames, tuple(cfg.target_size)),
                                    batch_size=cfg.batch_size, shuffle=False,
-                                   num_workers=4, pin_memory=True)
+                                   num_workers=cfg.num_workers, pin_memory=True)
 
         # model ------------------------------------------------------------------
         if cfg.model == "simple3dlstm":
             model = Simple3DLSTM(cfg.max_frames, tuple(cfg.target_size),
                                  p_drop=cfg.drop).to(device)
+            stages = [dict(name="full", epochs=cfg.epochs, lr=1e-4)]
+        elif cfg.model == "simple2dcnn":
+            model = Simple2DCNN(p_drop=cfg.drop).to(device)
             stages = [dict(name="full", epochs=cfg.epochs, lr=1e-4)]
         else:                                    # R3D‑18
             model = PretrainedR3D().to(device)
@@ -283,6 +337,11 @@ def main():
             if cfg.finetune:
                 stages.append(dict(name="ft", epochs=cfg.epochs//2, lr=1e-4,
                                    unfreeze=["layer4", "fc"]))
+            if cfg.full_finetune:
+                if not cfg.finetune:
+                    parser.error("--full_finetune requires --finetune")
+                stages.append(dict(name="full_ft", epochs=cfg.full_ft_epochs,
+                                   lr=cfg.full_ft_lr, unfreeze=["__all__"]))
 
         # ---------------- stage(s) training ----------------
         curves = defaultdict(list)
@@ -290,7 +349,7 @@ def main():
             # unfreeze if needed
             if "unfreeze" in st:
                 for n, p in model.net.named_parameters():
-                    if any(k in n for k in st["unfreeze"]):
+                    if "__all__" in st["unfreeze"] or any(k in n for k in st["unfreeze"]):
                         p.requires_grad_(True)
 
             c = train_stage(model, st["name"], tr_loader, vl_loader,
@@ -303,16 +362,18 @@ def main():
 
         # --------------- evaluation -----------------------
         vl_m, _, _, _ = eval_loader(infer_net, vl_loader, device)
-        te_m, ys_te, ps_te, _ = eval_loader(infer_net, te_loader, device)
-        print(f"TEST  AUC={te_m['auc']:.3f}  F1={te_m['f1']:.3f}  "
-              f"loss={te_m['loss']:.4f}")
+        te_m_raw, ys_te, ps_te, _ = eval_loader(infer_net, te_loader, device)
+        te_m = compute_metrics(ys_te, ps_te, threshold=thr)
+        te_m["loss"] = te_m_raw["loss"]
+        print(f"TEST  AUC={te_m['auc']:.3f}  threshold={thr:.2f}  "
+              f"F1={te_m['f1']:.3f}  loss={te_m['loss']:.4f}")
         fold_metrics.append(te_m)
 
         # --------------- plots & checkpoints --------------
-        prefix = f"plots/{cfg.model}_fold{fold_idx}"
+        prefix = f"plots/{cfg.run_prefix}_fold{fold_idx}"
         plot_curves(curves, prefix)
         plot_roc(ys_te, ps_te, f"{prefix}_roc.png")
-        torch.save(model.state_dict(), f"checkpoints/{cfg.model}_fold{fold_idx}.pth")
+        torch.save(model.state_dict(), f"checkpoints/{cfg.run_prefix}_fold{fold_idx}.pth")
 
     # ---------------- aggregate results ------------------
     df_keys = ["auc", "accuracy", "precision", "recall", "f1", "loss"]
@@ -320,12 +381,13 @@ def main():
     mean    = {k: float(np.mean(v)) for k, v in df.items()}
     std     = {k: float(np.std (v)) for k, v in df.items()}
 
-    print("\n==== 5‑fold summary ====")
+    print(f"\n==== {'5-fold' if cfg.cv else 'hold-out'} summary ====")
     for k in df_keys:
-        print(f"{k:9s}: {mean[k]:.3f} ± {std[k]:.3f}")
-    wandb.log({f"cv_mean_{k}": mean[k] for k in df_keys})
-    wandb.log({f"cv_std_{k}":  std[k]  for k in df_keys})
-    wandb.finish()
+        print(f"{k:9s}: {mean[k]:.3f} +/- {std[k]:.3f}")
+    prefix = "cv" if cfg.cv else "holdout"
+    wandb_log(cfg.use_wandb, {f"{prefix}_mean_{k}": mean[k] for k in df_keys})
+    wandb_log(cfg.use_wandb, {f"{prefix}_std_{k}":  std[k]  for k in df_keys})
+    wandb_finish(cfg.use_wandb)
 
 # --------------------------------------------------------------------------- #
 if __name__ == "__main__":

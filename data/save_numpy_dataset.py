@@ -1,116 +1,458 @@
-# ── save_numpy_dataset.py  (with leakage check) ──────────────────────────────
 #!/usr/bin/env python
 # coding: utf-8
 """
-Create train / val / test .npz files with *no* duplicate videos
-across splits (hash‑level guaranteed).
+Create cached train / val / test .npz files from raw videos.
+
+The script deduplicates by full-file hash before decoding and by decoded tensor
+hash after preprocessing. It also writes CSV manifests so every cached example
+can be traced back to its source path and split.
 """
-import os, cv2, random, argparse, hashlib, numpy as np
-from collections import defaultdict
+
+import argparse
+import csv
+import hashlib
+import json
+import math
+import re
+import random
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+import cv2
+import numpy as np
 from sklearn.model_selection import train_test_split
 
-TARGET_SIZE = (112, 112)
-MAX_FRAMES  = 60
-SEED        = 42
-HASH_NBYTES = 1_000_000      # hash first 1 MB
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from data.video_utils import resize_with_letterbox
 
-random.seed(SEED)
-np.random.seed(SEED)
+VIDEO_EXTENSIONS = (".mp4", ".webm", ".avi")
+SPLITS = ("train", "val", "test")
 
-# ────────────────────────────────────────────────────────────────────────────
-def quick_hash(path, n=HASH_NBYTES, algo="sha1"):
+
+def file_hash(path, algo="sha1", chunk_size=1024 * 1024):
     h = hashlib.new(algo)
     with open(path, "rb") as f:
-        h.update(f.read(n))
+        for chunk in iter(lambda: f.read(chunk_size), b""):
+            h.update(chunk)
     return h.hexdigest()
 
-def load_video(path):
-    cap   = cv2.VideoCapture(path)
+
+def array_hash(array, algo="sha1"):
+    h = hashlib.new(algo)
+    h.update(np.ascontiguousarray(array).tobytes())
+    return h.hexdigest()
+
+
+def load_video(path, max_frames, target_size, unreadable_policy, pad_value=128):
+    cap = cv2.VideoCapture(str(path))
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 0
 
-    # pick indices (may end up empty if total==0)
     if total == 0:
         idxs = []
-    elif total <= MAX_FRAMES:
+    elif total <= max_frames:
         idxs = list(range(total))
     else:
-        idxs = sorted(random.sample(range(total), MAX_FRAMES))
+        idxs = sorted(random.sample(range(total), max_frames))
 
     frames = []
+    failed_reads = 0
     for idx in idxs:
         cap.set(cv2.CAP_PROP_POS_FRAMES, idx)
-        ok, fr = cap.read()
+        ok, frame = cap.read()
         if not ok:
-            fr = np.zeros((*TARGET_SIZE, 3), np.uint8)          # ← fallback
-        fr = cv2.resize(cv2.cvtColor(fr, cv2.COLOR_BGR2RGB), TARGET_SIZE)
-        frames.append(fr)
+            failed_reads += 1
+            continue
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = resize_with_letterbox(frame, target_size, pad_value=pad_value)
+        frames.append(frame)
 
     cap.release()
 
-    # ── NEW: deal with *completely unreadable* video ────────────────────
-    if len(frames) == 0:                                      # no frame decoded
-        return np.zeros((MAX_FRAMES, *TARGET_SIZE, 3), dtype="uint8")
+    if not frames:
+        if unreadable_policy == "zeros":
+            arr = np.zeros((max_frames, *target_size, 3), dtype=np.uint8)
+            return arr, {
+                "status": "unreadable_zero_filled",
+                "total_frames": total,
+                "decoded_frames": 0,
+                "failed_reads": failed_reads,
+            }
+        return None, {
+            "status": "excluded_unreadable",
+            "total_frames": total,
+            "decoded_frames": 0,
+            "failed_reads": failed_reads,
+        }
 
-    # pad short clips
-    if len(frames) < MAX_FRAMES:
+    if len(frames) < max_frames:
         pad = frames[-1]
-        frames += [pad] * (MAX_FRAMES - len(frames))
+        frames += [pad] * (max_frames - len(frames))
 
-    return np.stack(frames).astype("uint8")          # (T,H,W,C)
+    arr = np.stack(frames).astype(np.uint8)
+    return arr, {
+        "status": "ok",
+        "total_frames": total,
+        "decoded_frames": min(len(idxs) - failed_reads, max_frames),
+        "failed_reads": failed_reads,
+    }
 
-# ────────────────────────────────────────────────────────────────────────────
-def main(root):
-    # 1) crawl both class folders ------------------------------------------------
-    raw = []            # tuples: (hash, path, label)
-    for lab, folder in [(1, "positive"), (0, "negative")]:
-        full = os.path.join(root, folder)
-        for fn in os.listdir(full):
-            if fn.lower().endswith((".mp4", ".webm", ".avi")):
-                path  = os.path.join(full, fn)
-                h     = quick_hash(path)
-                raw.append((h, path, lab))
 
-    # 2) de‑duplicate ------------------------------------------------------------
-    chosen_paths, chosen_labels = [], []
-    seen = {}           # hash ➜ (path, label)
-    clashes = defaultdict(list)
+def crawl_videos(root):
+    rows = []
+    for label, folder in [(1, "positive"), (0, "negative")]:
+        class_dir = root / folder
+        if not class_dir.is_dir():
+            raise FileNotFoundError(f"Missing class folder: {class_dir}")
+        for path in sorted(class_dir.iterdir()):
+            if path.suffix.lower() in VIDEO_EXTENSIONS:
+                rows.append({"path": path, "label": label})
+    return rows
 
-    for h, path, lab in raw:
-        if h not in seen:
-            seen[h] = (path, lab)
-            chosen_paths.append(path)
-            chosen_labels.append(lab)
+
+def write_manifest(path, rows, fieldnames):
+    with open(path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def capture_month(path):
+    stem = Path(path).stem
+    match = re.search(r"(20\d{2})[-_]?(\d{2})", stem)
+    if not match:
+        return "unknown"
+    return f"{match.group(1)}-{match.group(2)}"
+
+
+def add_source_fields(row):
+    path = Path(row["path"])
+    return {
+        **row,
+        "source_month": capture_month(path),
+        "source_extension": path.suffix.lower() or "none",
+    }
+
+
+def split_counts(rows):
+    return {
+        "count": len(rows),
+        "positive": sum(int(row["label"]) == 1 for row in rows),
+        "negative": sum(int(row["label"]) == 0 for row in rows),
+    }
+
+
+def label_count_by(rows, field):
+    out = defaultdict(lambda: Counter())
+    for row in rows:
+        label = "positive" if int(row["label"]) == 1 else "negative"
+        out[str(row.get(field, "unknown"))][label] += 1
+    return {
+        key: {"positive": int(counts["positive"]), "negative": int(counts["negative"])}
+        for key, counts in sorted(out.items())
+    }
+
+
+def numeric_summary(rows, field):
+    out = {}
+    for label_value, label_name in [(1, "positive"), (0, "negative")]:
+        vals = [float(row[field]) for row in rows if int(row["label"]) == label_value]
+        out[label_name] = {
+            "count": len(vals),
+            "mean": float(np.mean(vals)) if vals else None,
+            "min": float(np.min(vals)) if vals else None,
+            "max": float(np.max(vals)) if vals else None,
+        }
+    return out
+
+
+def source_distribution(rows, field):
+    counts = Counter(str(row.get(field, "unknown")) for row in rows)
+    total = len(rows) or 1
+    return {key: count / total for key, count in counts.items()}
+
+
+def distribution_l1(split_rows, all_rows, field):
+    overall = source_distribution(all_rows, field)
+    split = source_distribution(split_rows, field)
+    keys = set(overall) | set(split)
+    return sum(abs(split.get(k, 0.0) - overall.get(k, 0.0)) for k in keys)
+
+
+def frame_mean_gap(split_rows, all_rows):
+    if not split_rows or not all_rows:
+        return 0.0
+    all_mean = np.mean([float(row["total_frames"]) for row in all_rows])
+    split_mean = np.mean([float(row["total_frames"]) for row in split_rows])
+    scale = np.std([float(row["total_frames"]) for row in all_rows]) or 1.0
+    return abs(split_mean - all_mean) / scale
+
+
+def candidate_score(train_rows, val_rows, test_rows, all_rows):
+    score = 0.0
+    for rows in (train_rows, val_rows, test_rows):
+        score += 4.0 * distribution_l1(rows, all_rows, "source_month")
+        score += 2.0 * distribution_l1(rows, all_rows, "source_extension")
+        score += frame_mean_gap(rows, all_rows)
+    return float(score)
+
+
+def split_random(rows, labels, args):
+    train_rows, test_rows, y_train, y_test = train_test_split(
+        rows,
+        labels,
+        test_size=args.test_frac,
+        stratify=labels,
+        random_state=args.seed,
+    )
+    val_ratio = args.val_frac / (1.0 - args.test_frac)
+    train_rows, val_rows, y_train, y_val = train_test_split(
+        train_rows,
+        y_train,
+        test_size=val_ratio,
+        stratify=y_train,
+        random_state=args.seed,
+    )
+    return train_rows, val_rows, test_rows
+
+
+def split_source_aware(rows, labels, args):
+    best = None
+    best_score = math.inf
+    val_ratio = args.val_frac / (1.0 - args.test_frac)
+    for offset in range(args.source_aware_candidates):
+        seed = args.seed + offset
+        try:
+            train_rows, test_rows, y_train, y_test = train_test_split(
+                rows,
+                labels,
+                test_size=args.test_frac,
+                stratify=labels,
+                random_state=seed,
+            )
+            train_rows, val_rows, y_train, y_val = train_test_split(
+                train_rows,
+                y_train,
+                test_size=val_ratio,
+                stratify=y_train,
+                random_state=seed,
+            )
+        except ValueError:
+            continue
+        score = candidate_score(train_rows, val_rows, test_rows, rows)
+        if score < best_score:
+            best_score = score
+            best = (train_rows, val_rows, test_rows)
+    if best is None:
+        raise RuntimeError("Could not create a stratified source-aware split.")
+    return best, best_score
+
+
+def split_warnings(rows):
+    warnings = []
+    for field in ("source_month", "source_extension"):
+        counts = label_count_by(rows, field)
+        one_class = {
+            key: value for key, value in counts.items()
+            if (value["positive"] == 0 or value["negative"] == 0)
+            and (value["positive"] + value["negative"]) > 1
+        }
+        if one_class:
+            warnings.append(
+                f"{field} is class-confounded for {one_class}; source-aware splitting can reduce but not eliminate shortcut bias."
+            )
+    return warnings
+
+
+def write_split_diagnostics(output_dir, strategy, all_rows, split_rows, score=None):
+    diagnostics = {
+        "split_strategy": strategy,
+        "source_aware_score": score,
+        "warnings": split_warnings(all_rows),
+        "overall": {
+            "label_counts": split_counts(all_rows),
+            "month_counts": label_count_by(all_rows, "source_month"),
+            "extension_counts": label_count_by(all_rows, "source_extension"),
+            "total_frames_by_label": numeric_summary(all_rows, "total_frames"),
+            "failed_reads_by_label": numeric_summary(all_rows, "failed_reads"),
+        },
+        "splits": {},
+    }
+    for split, rows in split_rows:
+        diagnostics["splits"][split] = {
+            "label_counts": split_counts(rows),
+            "month_counts": label_count_by(rows, "source_month"),
+            "extension_counts": label_count_by(rows, "source_extension"),
+            "total_frames_by_label": numeric_summary(rows, "total_frames"),
+            "failed_reads_by_label": numeric_summary(rows, "failed_reads"),
+        }
+    with open(output_dir / "split_diagnostics.json", "w", encoding="utf-8") as f:
+        json.dump(diagnostics, f, indent=2)
+
+
+def main(args):
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+
+    root = Path(args.root).expanduser().resolve()
+    output_dir = Path(args.output_dir).expanduser().resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    target_size = tuple(args.target_size)
+
+    raw_rows = crawl_videos(root)
+    by_raw_hash = {}
+    raw_clashes = defaultdict(list)
+    raw_unique = []
+
+    for row in raw_rows:
+        raw_sha1 = file_hash(row["path"])
+        row = {**row, "raw_hash": raw_sha1}
+        if raw_sha1 not in by_raw_hash:
+            by_raw_hash[raw_sha1] = row
+            raw_unique.append(row)
         else:
-            prev_path, prev_lab = seen[h]
-            if prev_lab != lab:
-                clashes[h].append((prev_path, prev_lab))
-                clashes[h].append((path, lab))
-            # else (same label) silently keep the first one
+            previous = by_raw_hash[raw_sha1]
+            if previous["label"] != row["label"]:
+                raw_clashes[raw_sha1].extend([previous, row])
 
-    if clashes:
-        print("⚠️  Conflicting duplicates found (same video, different labels) – keeping the FIRST copy only:\n")
-        for h, items in clashes.items():
-            for p, l in items:
-                print(f"  {os.path.basename(p)}  label={l}")
-        print()
+    if raw_clashes:
+        print("Conflicting raw-file duplicates found; keeping the first copy only:")
+        for raw_sha1, items in raw_clashes.items():
+            print(f"  raw_hash={raw_sha1}")
+            for item in items:
+                print(f"    {item['path'].name} label={item['label']}")
 
-    # 3) train / val / test split ------------------------------------------------
-    tr, te, y_tr, y_te = train_test_split(
-        chosen_paths, chosen_labels, test_size=.20,
-        stratify=chosen_labels, random_state=SEED)
+    decoded_unique = []
+    skipped_rows = []
+    by_decoded_hash = {}
+    decoded_clashes = defaultdict(list)
 
-    tr, vl, y_tr, y_vl = train_test_split(
-        tr, y_tr, test_size=.125, stratify=y_tr, random_state=SEED)
+    for row in raw_unique:
+        video, meta = load_video(
+            row["path"],
+            max_frames=args.max_frames,
+            target_size=target_size,
+            unreadable_policy=args.unreadable_policy,
+            pad_value=args.pad_value,
+        )
+        base = {
+            "path": str(row["path"]),
+            "label": row["label"],
+            "raw_hash": row["raw_hash"],
+            "decoded_hash": "",
+            **meta,
+        }
+        if video is None:
+            skipped_rows.append(base)
+            continue
 
-    splits = [("train", tr, y_tr), ("val", vl, y_vl), ("test", te, y_te)]
+        decoded_sha1 = array_hash(video)
+        base["decoded_hash"] = decoded_sha1
+        base["is_all_zero"] = int(np.all(video == 0))
 
-    # 4) save .npz ---------------------------------------------------------------
-    os.makedirs("data", exist_ok=True)
-    for split, plist, lab in splits:
-        X = np.stack([load_video(p) for p in plist])
-        y = np.array(lab, dtype=np.uint8)
-        np.savez_compressed(f"data/{split}.npz", X=X, y=y)
+        if base["is_all_zero"] and not args.allow_all_zero:
+            base["status"] = "excluded_all_zero"
+            skipped_rows.append(base)
+            continue
+
+        if decoded_sha1 in by_decoded_hash:
+            previous = by_decoded_hash[decoded_sha1]
+            if previous["label"] != row["label"]:
+                decoded_clashes[decoded_sha1].extend([previous, base])
+            base["status"] = "excluded_decoded_duplicate"
+            skipped_rows.append(base)
+            continue
+
+        base = add_source_fields(base)
+        by_decoded_hash[decoded_sha1] = base
+        decoded_unique.append({**base, "video": video})
+
+    if decoded_clashes:
+        print("Conflicting decoded-array duplicates found; keeping the first copy only:")
+        for decoded_sha1, items in decoded_clashes.items():
+            print(f"  decoded_hash={decoded_sha1}")
+            for item in items:
+                print(f"    {Path(item['path']).name} label={item['label']}")
+
+    if not decoded_unique:
+        raise RuntimeError("No readable unique videos found.")
+
+    labels = [row["label"] for row in decoded_unique]
+    split_score = None
+    if args.split_strategy == "source_aware":
+        (train_rows, val_rows, test_rows), split_score = split_source_aware(
+            decoded_unique, labels, args
+        )
+    else:
+        train_rows, val_rows, test_rows = split_random(decoded_unique, labels, args)
+
+    split_rows = [("train", train_rows), ("val", val_rows), ("test", test_rows)]
+    manifest_rows = []
+    for split, rows in split_rows:
+        X = np.stack([row["video"] for row in rows])
+        y = np.array([row["label"] for row in rows], dtype=np.uint8)
+        np.savez_compressed(output_dir / f"{split}.npz", X=X, y=y)
         print(f"{split}: {X.shape[0]} videos  (pos={int(y.sum())}, neg={len(y)-int(y.sum())})")
+        for row in rows:
+            manifest_rows.append({
+                "split": split,
+                "path": row["path"],
+                "label": row["label"],
+                "raw_hash": row["raw_hash"],
+                "decoded_hash": row["decoded_hash"],
+                "total_frames": row["total_frames"],
+                "decoded_frames": row["decoded_frames"],
+                "failed_reads": row["failed_reads"],
+                "status": row["status"],
+                "is_all_zero": row["is_all_zero"],
+                "resize_mode": "letterbox",
+                "pad_value": args.pad_value,
+                "source_month": row["source_month"],
+                "source_extension": row["source_extension"],
+            })
+
+    manifest_fields = [
+        "split", "path", "label", "raw_hash", "decoded_hash", "total_frames",
+        "decoded_frames", "failed_reads", "status", "is_all_zero",
+        "resize_mode", "pad_value", "source_month", "source_extension",
+    ]
+    write_manifest(output_dir / "split_manifest.csv", manifest_rows, manifest_fields)
+    write_split_diagnostics(output_dir, args.split_strategy, decoded_unique, split_rows, split_score)
+
+    if skipped_rows:
+        skipped_fields = [
+            "path", "label", "raw_hash", "decoded_hash", "total_frames",
+            "decoded_frames", "failed_reads", "status", "is_all_zero",
+        ]
+        for row in skipped_rows:
+            row.setdefault("is_all_zero", "")
+        write_manifest(output_dir / "skipped_manifest.csv", skipped_rows, skipped_fields)
+        print(f"skipped: {len(skipped_rows)} videos; see skipped_manifest.csv")
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", required=True,
+                        help="dataset root containing positive/ and negative/ folders")
+    parser.add_argument("--output_dir", default="data",
+                        help="directory where train.npz, val.npz, test.npz, and manifests are written")
+    parser.add_argument("--max_frames", type=int, default=60)
+    parser.add_argument("--target_size", nargs=2, type=int, default=[112, 112])
+    parser.add_argument("--pad_value", type=int, default=128,
+                        help="padding value for aspect-ratio letterbox resize")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--val_frac", type=float, default=0.10)
+    parser.add_argument("--test_frac", type=float, default=0.20)
+    parser.add_argument("--split_strategy", choices=["random", "source_aware"], default="random",
+                        help="random stratified split or deterministic candidate search that reduces source/month imbalance")
+    parser.add_argument("--source_aware_candidates", type=int, default=500,
+                        help="number of deterministic stratified split candidates to score for source_aware")
+    parser.add_argument("--unreadable_policy", choices=["exclude", "zeros"], default="exclude",
+                        help="exclude unreadable videos by default, or zero-fill them explicitly")
+    parser.add_argument("--allow_all_zero", action="store_true",
+                        help="keep all-zero decoded videos instead of excluding them")
+    return parser.parse_args()
+
 
 if __name__ == "__main__":
-    main(r"C:\Users\zhams\HWs\Autsim\dataset")
+    main(parse_args())

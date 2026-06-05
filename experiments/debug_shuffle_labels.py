@@ -58,7 +58,7 @@ def get_model(name, max_frames, target_size):
 
 # ---------------------------------------------------------------------------
 
-def build_loader(split, batch_size, shuffle_labels=False):
+def build_loader(split, batch_size, shuffle_labels=False, shuffle_batches=False):
     """Return DataLoader built from cached .npz split.
     If *shuffle_labels* is True, permute the labels within this split."""
     ds = load_split(split)                     # TensorDataset(vids, labels)
@@ -68,10 +68,10 @@ def build_loader(split, batch_size, shuffle_labels=False):
 
     def collate(batch):
         vids, lbls = zip(*batch)
-        vids = torch.stack([_normalize_tensor(v.float() / 255.) for v in vids])
+        vids = torch.stack([_normalize_tensor(v.float()) for v in vids])
         return vids, torch.stack(lbls)
 
-    return DataLoader(ds, batch_size=batch_size, shuffle=True,
+    return DataLoader(ds, batch_size=batch_size, shuffle=shuffle_batches,
                       collate_fn=collate, num_workers=0, pin_memory=True)
 
 # ---------------------------------------------------------------------------
@@ -115,7 +115,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # ── data ───────────────────────────────────────────────────────────────
-    tr_loader = build_loader("train", args.batch_size, shuffle_labels=True)
+    tr_loader = build_loader("train", args.batch_size, shuffle_labels=True, shuffle_batches=True)
     vl_loader = build_loader("val",   args.batch_size, shuffle_labels=True)
     te_loader = build_loader("test",  args.batch_size, shuffle_labels=True)
 
@@ -142,14 +142,14 @@ def main():
 
     # ── final test ─────────────────────────────────────────────────────────
     te = evaluate(model, te_loader, device)
-    print("\n=== Shuffled‑label performance ===")
+    print("\n=== Shuffled-label performance ===")
     print(f"Train AUC {tr['auc']:.3f}   Val AUC {vl['auc']:.3f}   Test AUC {te['auc']:.3f}")
     print(f"Test loss {te['loss']:.3f}  Accuracy {te['accuracy']:.3f}")
 
     if te['auc'] > 0.65:
-        print("AUC is well above chance – investigate potential leakage!")
+        print("AUC is well above chance - investigate potential leakage!")
     else:
-        print(" Looks good – model can’t learn from scrambled labels.")
+        print("Looks good - model cannot learn from scrambled labels.")
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,258 @@
+{
+  "split_strategy": "source_aware",
+  "source_aware_score": 1.4274048428480786,
+  "warnings": [
+    "source_month is class-confounded for {'2024-08': {'positive': 24, 'negative': 0}, '2024-09': {'positive': 20, 'negative': 0}}; source-aware splitting can reduce but not eliminate shortcut bias.",
+    "source_extension is class-confounded for {'.mp4': {'positive': 5, 'negative': 0}}; source-aware splitting can reduce but not eliminate shortcut bias."
+  ],
+  "overall": {
+    "label_counts": {
+      "count": 107,
+      "positive": 53,
+      "negative": 54
+    },
+    "month_counts": {
+      "2024-07": {
+        "positive": 4,
+        "negative": 19
+      },
+      "2024-08": {
+        "positive": 24,
+        "negative": 0
+      },
+      "2024-09": {
+        "positive": 20,
+        "negative": 0
+      },
+      "2024-10": {
+        "positive": 5,
+        "negative": 35
+      }
+    },
+    "extension_counts": {
+      ".mp4": {
+        "positive": 5,
+        "negative": 0
+      },
+      ".webm": {
+        "positive": 48,
+        "negative": 54
+      }
+    },
+    "total_frames_by_label": {
+      "positive": {
+        "count": 53,
+        "mean": 4979.981132075472,
+        "min": 272.0,
+        "max": 5895.0
+      },
+      "negative": {
+        "count": 54,
+        "mean": 5616.407407407408,
+        "min": 4969.0,
+        "max": 5871.0
+      }
+    },
+    "failed_reads_by_label": {
+      "positive": {
+        "count": 53,
+        "mean": 0.09433962264150944,
+        "min": 0.0,
+        "max": 4.0
+      },
+      "negative": {
+        "count": 54,
+        "mean": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      }
+    }
+  },
+  "splits": {
+    "train": {
+      "label_counts": {
+        "count": 74,
+        "positive": 37,
+        "negative": 37
+      },
+      "month_counts": {
+        "2024-07": {
+          "positive": 3,
+          "negative": 12
+        },
+        "2024-08": {
+          "positive": 17,
+          "negative": 0
+        },
+        "2024-09": {
+          "positive": 14,
+          "negative": 0
+        },
+        "2024-10": {
+          "positive": 3,
+          "negative": 25
+        }
+      },
+      "extension_counts": {
+        ".mp4": {
+          "positive": 3,
+          "negative": 0
+        },
+        ".webm": {
+          "positive": 34,
+          "negative": 37
+        }
+      },
+      "total_frames_by_label": {
+        "positive": {
+          "count": 37,
+          "mean": 4992.7027027027025,
+          "min": 272.0,
+          "max": 5895.0
+        },
+        "negative": {
+          "count": 37,
+          "mean": 5606.513513513513,
+          "min": 4969.0,
+          "max": 5871.0
+        }
+      },
+      "failed_reads_by_label": {
+        "positive": {
+          "count": 37,
+          "mean": 0.02702702702702703,
+          "min": 0.0,
+          "max": 1.0
+        },
+        "negative": {
+          "count": 37,
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "val": {
+      "label_counts": {
+        "count": 11,
+        "positive": 5,
+        "negative": 6
+      },
+      "month_counts": {
+        "2024-07": {
+          "positive": 0,
+          "negative": 2
+        },
+        "2024-08": {
+          "positive": 3,
+          "negative": 0
+        },
+        "2024-09": {
+          "positive": 2,
+          "negative": 0
+        },
+        "2024-10": {
+          "positive": 0,
+          "negative": 4
+        }
+      },
+      "extension_counts": {
+        ".webm": {
+          "positive": 5,
+          "negative": 6
+        }
+      },
+      "total_frames_by_label": {
+        "positive": {
+          "count": 5,
+          "mean": 5079.6,
+          "min": 2837.0,
+          "max": 5656.0
+        },
+        "negative": {
+          "count": 6,
+          "mean": 5605.833333333333,
+          "min": 5414.0,
+          "max": 5666.0
+        }
+      },
+      "failed_reads_by_label": {
+        "positive": {
+          "count": 5,
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        },
+        "negative": {
+          "count": 6,
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    },
+    "test": {
+      "label_counts": {
+        "count": 22,
+        "positive": 11,
+        "negative": 11
+      },
+      "month_counts": {
+        "2024-07": {
+          "positive": 1,
+          "negative": 5
+        },
+        "2024-08": {
+          "positive": 4,
+          "negative": 0
+        },
+        "2024-09": {
+          "positive": 4,
+          "negative": 0
+        },
+        "2024-10": {
+          "positive": 2,
+          "negative": 6
+        }
+      },
+      "extension_counts": {
+        ".mp4": {
+          "positive": 2,
+          "negative": 0
+        },
+        ".webm": {
+          "positive": 9,
+          "negative": 11
+        }
+      },
+      "total_frames_by_label": {
+        "positive": {
+          "count": 11,
+          "mean": 4891.909090909091,
+          "min": 1662.0,
+          "max": 5691.0
+        },
+        "negative": {
+          "count": 11,
+          "mean": 5655.454545454545,
+          "min": 5632.0,
+          "max": 5675.0
+        }
+      },
+      "failed_reads_by_label": {
+        "positive": {
+          "count": 11,
+          "mean": 0.36363636363636365,
+          "min": 0.0,
+          "max": 4.0
+        },
+        "negative": {
+          "count": 11,
+          "mean": 0.0,
+          "min": 0.0,
+          "max": 0.0
+        }
+      }
+    }
+  }
+}

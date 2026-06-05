@@ -21,10 +21,12 @@ This repository contains the code for a deep learning project aimed at early scr
     * [Regularization Experiments](#3-regularization-experiments-experimentstrain_regularizedpy)
     * [Label Shuffle Sanity Check](#4-label-shuffle-sanity-check-experimentsdebug_shuffle_labelspy)
     * [Inspecting Data Splits](#5-inspecting-data-splits-notebooksinspect_splitipynb)
-7.  [Experiments and Results](#experiments-and-results)
-8.  [Literature Review](#literature-review)
-9.  [Branches](#branches)
-10. [License](#license)
+7.  [Testing](#testing)
+8.  [Experiments and Results](#experiments-and-results)
+9.  [Literature Review](#literature-review)
+10. [Evaluation Protocol](#evaluation-protocol)
+11. [Branches](#branches)
+12. [License](#license)
 
 ## Overview
 
@@ -32,19 +34,27 @@ Early detection of Autism Spectrum Disorder (ASD) is crucial for timely interven
 
 ## Key Features
 
+> **Audit note:** cached `train.npz` / `val.npz` / `test.npz` files represent a
+> single hold-out split. The current `train.py` guards against `--cached --cv`
+> because repeating the same cached split across folds is not valid 5-fold
+> cross-validation. Treat cached results as hold-out results unless
+> fold-specific cached splits are generated and rerun.
+
 * **Models Implemented:**
     * `Simple3DLSTM`: A custom model combining 3D CNN layers for spatial feature extraction across time and an LSTM layer for temporal sequence modeling. Includes optional 3D dropout.
+    * `Simple2DCNN`: A frame-level 2D CNN baseline that processes frames independently and averages features over time. This is an ablation to test whether static frame/background cues are enough.
     * `PretrainedR3D`: Utilizes a ResNet-based 3D CNN (R3D-18) pre-trained on the Kinetics-400 action recognition dataset, adapted for binary classification. Supports head-only training and fine-tuning (unfreezing deeper layers).
 * **Data Handling:**
     * Supports training directly from raw video files (`.mp4`, `.webm`, `.avi`).
     * Supports training from pre-processed, cached `.npz` tensors for faster experimentation.
     * Includes a script (`data/save_numpy_dataset.py`) for preprocessing raw videos into `.npz` files, featuring:
-        * **Deduplication:** Uses SHA1 hashing on the first 1MB of video files to detect and handle exact duplicates, preventing data leakage across splits. Reports conflicting duplicates (same video, different labels).
+        * **Deduplication:** Uses full-file SHA1 hashing and decoded-array hashing to detect exact duplicates and reduce leakage risk. Reports conflicting duplicates (same video, different labels).
         * **Frame Sampling/Padding:** Selects a fixed number of frames (`MAX_FRAMES`) randomly or uses all frames if fewer exist, padding if necessary.
+        * **Aspect-Ratio Resize:** Rescales the longer video dimension to the target size and pads the shorter dimension, avoiding geometric distortion from direct 112x112 stretching.
         * **Splitting:** Creates stratified train/validation/test splits (approx. 70%/10%/20%).
 * **Training Strategies:**
-    * **Cross-Validation:** Supports 5-fold `GroupKFold` cross-validation, ensuring subjects are not split across train/validation/test sets within a fold (`train.py --cv`).
-    * **Hold-Out Validation:** Supports a single 70%/10%/20% train/validation/test split (`train.py` default).
+    * **Cross-Validation:** Supports 5-fold `GroupKFold` cross-validation for raw video input (`train.py --cv`). Cached CV is disabled until fold-specific cached splits exist.
+    * **Hold-Out Validation:** Supports a single 70%/10%/20% train/validation/test split (`train.py` default, and the only supported mode for `--cached`).
     * **Optimization:** Uses AdamW optimizer with Cosine Annealing learning rate scheduler.
     * **Mixed Precision:** Leverages Automatic Mixed Precision (AMP) via `torch.amp` and `GradScaler` for faster training and reduced memory usage.
     * **Regularization:** Includes weight decay (AdamW) and optional 3D Dropout (for `Simple3DLSTM`).
@@ -55,7 +65,7 @@ Early detection of Autism Spectrum Disorder (ASD) is crucial for timely interven
     * **Calibration:** Implements optional Temperature Scaling (`--temp`) to calibrate model prediction probabilities using the validation set (`src/utils/temperature_scaling.py`).
     * **Visualization:** Generates and saves plots for training/validation loss and AUC curves, as well as ROC curves for each fold/run.
 * **Experiment Management:**
-    * Integrates with Weights & Biases (`wandb`) for logging metrics, configurations, and results (requires setup).
+    * Integrates with Weights & Biases (`wandb`) for logging metrics, configurations, and results when `--wandb` is explicitly enabled.
     * Includes scripts for specific experiments (regularization tuning, sanity checks).
 * **Sanity Check:** Provides a label shuffling script (`experiments/debug_shuffle_labels.py`) to verify that the model cannot learn effectively when labels are randomized, helping to rule out data leakage or implementation bugs.
 
@@ -107,12 +117,12 @@ The project follows these general steps:
 
 1.  **Collection:** Raw video data is expected in a root directory (e.g., `dataset/`) with subfolders `positive/` and `negative/` containing videos corresponding to ASD positive and negative cases, respectively.
 2.  **Preprocessing (`data/save_numpy_dataset.py`):**
-    * Videos are scanned, and hashes are computed (first 1MB) to identify duplicates.
+    * Videos are scanned, and full-file SHA1 hashes are computed to identify duplicates.
     * Unique videos are selected, handling potential label conflicts for duplicates.
     * A fixed number of frames (`MAX_FRAMES`) are sampled/padded per video.
-    * Frames are resized to `TARGET_SIZE`.
+    * Frames are resized with letterboxing: the longer side is scaled to `TARGET_SIZE`, the shorter side is padded with the configured pad value.
     * Data is split into stratified train/validation/test sets (approx. 70%/10%/20%).
-    * Each split is saved as a compressed NumPy file (`data/train.npz`, `data/val.npz`, `data/test.npz`) containing video tensors (`X`) of shape `(N, T, H, W, C)` (uint8) and labels (`y`).
+    * Each split is saved as a compressed NumPy file (`data/train.npz`, `data/val.npz`, `data/test.npz`) containing video tensors (`X`) of shape `(N, T, H, W, C)` (uint8) and labels (`y`). The preprocessing script also writes split and skipped-video manifests with raw and decoded hashes.
 3.  **Loading:**
     * **Raw Video Pipeline (`data/dataloader.py`):** Reads video files on-the-fly, performs frame sampling/padding, applies augmentations (random crop, jitter, flip, rotation, erasing, normalization). Used by `train.py` when `--cached` is *not* specified.
     * **Cached Data Pipeline (`src/utils/data_cached.py`):** Loads `.npz` files using memory mapping (`mmap_mode`), permutes tensor dimensions to `(N, C, T, H, W)`, applies augmentations via a custom `collate_fn`, and normalizes. Used by `train.py --cached`, `train_regularized.py`, and `debug_shuffle_labels.py`.
@@ -126,14 +136,16 @@ The project follows these general steps:
 * **Pretrained R3D-18 (`src/models/pretrained_r3d.py`):**
     * Loads the R3D-18 model pre-trained on Kinetics-400 from `torchvision`.
     * Replaces the final fully connected layer with a new `nn.Linear` layer for binary classification (outputting raw logits).
-    * Supports two training modes via `train.py`:
+    * Supports three training stages via `train.py`:
         1.  **Head-Only:** Freezes all backbone layers and trains only the final classification layer.
         2.  **Fine-Tuning (`--finetune`):** After an initial head-only training phase, unfreezes the later layers (e.g., `layer4` and `fc`) and trains them with a smaller learning rate.
+        3.  **Full-Backbone Fine-Tuning (`--finetune --full_finetune`):** Adds a final low-learning-rate stage that unfreezes the complete R3D backbone.
 
 ### Training
 
 * The `train.py` script orchestrates the training process.
 * It can perform either k-fold cross-validation (`--cv`) based on subject groups or a single hold-out split.
+* Uses `nn.BCEWithLogitsLoss`, which combines sigmoid activation and binary cross-entropy in one numerically stable loss function. Model heads should output raw logits, not sigmoid probabilities.
 * Uses AdamW optimizer and Cosine Annealing LR scheduler.
 * Employs Automatic Mixed Precision (AMP) for efficiency.
 * Implements early stopping based on validation loss.
@@ -177,10 +189,10 @@ The project follows these general steps:
     pip install wandb
     wandb login
     ```
-    The `train.py` script will automatically log runs if `wandb` is installed and configured. You might need to uncomment the `wandb` import and calls in the script if they are commented out.
+    The `train.py` script logs to Weights & Biases only when `--wandb` is passed. Without `--wandb`, training stays local/offline-safe.
 
 5.  **Prepare Data:**
-    * Place your raw video data in a directory structure like `dataset/positive/` and `dataset/negative/`. Update the path in `data/save_numpy_dataset.py` or modify the script to accept a path argument.
+    * Place your raw video data in a directory structure like `dataset/positive/` and `dataset/negative/`.
     * Run the preprocessing script (see [Usage](#1-data-preprocessing-datasave_numpy_datasetpy)) to generate the `.npz` files in the `data/` directory.
 
 ## Usage
@@ -190,12 +202,11 @@ The project follows these general steps:
 This script converts raw videos into cached `.npz` files for faster training and performs deduplication.
 
 ```bash
-# Example: Specify the root directory containing 'positive' and 'negative' subfolders
-# First, modify the hardcoded path in the script or adapt it to use command-line arguments.
-# Then run:
-python data/save_numpy_dataset.py 
+python data/save_numpy_dataset.py --root path/to/dataset --output_dir data
 ```
 - This will create `data/train.npz`, `data/val.npz`, and `data/test.npz`.
+- Use `--pad_value 128` for gray padding. Gray is the default because black borders were visually salient in Grad-CAM and could become a shortcut.
+- Use `--split_strategy source_aware --output_dir data_source_aware` to create a separate cache that searches deterministic stratified split candidates and minimizes month/extension/frame-count imbalance where possible. This also writes `split_diagnostics.json`.
 
 ### 2. Training (`train.py`)
 
@@ -203,10 +214,10 @@ This is the main script for training models using either cross-validation or a h
 
 **Common Arguments:**
 
-* `--model`: Choose the model (`simple3dlstm` or `r3d`). (Required)
+* `--model`: Choose the model (`simple3dlstm`, `simple2dcnn`, or `r3d`). (Required)
 * `--data_path`: Path to the directory containing raw videos or the generated `.npz` files (defaults to `data/`).
 * `--cached`: Use pre-processed `.npz` files (requires running `save_numpy_dataset.py` first).
-* `--cv`: Perform 5-fold Group Cross-Validation (default is True in the script).
+* `--cv`: Perform 5-fold Group Cross-Validation for raw video input only. Do not combine `--cached` and `--cv`.
 * `--splits`: Number of CV splits (default: 5).
 * `--batch_size`: Training batch size (default: 8).
 * `--epochs`: Total number of epochs (default: 50). For R3D, this is split between head-only and fine-tuning stages if `--finetune` is used.
@@ -216,27 +227,64 @@ This is the main script for training models using either cross-validation or a h
 * `--max_frames`: Maximum frames to sample per video (default: 60).
 * `--target_size`: Target HxW resolution for frames (default: 112 112).
 * `--finetune`: For `r3d` model, unfreeze `layer4` and `fc` for fine-tuning after the head-only phase.
+* `--full_finetune`: For `r3d` model, add a final stage that unfreezes the whole backbone after `--finetune`.
+* `--full_ft_epochs`: Number of epochs for the full-backbone stage.
+* `--full_ft_lr`: Learning rate for the full-backbone stage.
 * `--drop`: 3D dropout probability for `simple3dlstm` (default: 0.0).
+* `--pad_jitter`: Training-only random jitter range for gray letterbox padding in cached data. This helps check whether models rely on fixed padding artifacts.
 
 **Examples:**
 
 ```bash
-# Train Simple3DLSTM using 5-fold CV with cached data and temperature scaling
-python train.py --model simple3dlstm --cached --cv --temp --epochs 50 --patience 10 --batch_size 8
+# Train Simple3DLSTM using cached hold-out data and temperature scaling
+python train.py --model simple3dlstm --cached --temp --epochs 50 --patience 10 --batch_size 8
+
+# Train the Conv2D frame-level ablation
+python train.py --model simple2dcnn --cached --temp --epochs 100 --patience 20 --batch_size 8 --pad_jitter 16
 
 # Train R3D (head-only) using a single hold-out split with cached data
-# (--cv is default True, ih you skip this argument by default it is set for a single hold-out split)
-python train.py --model r3d --cached --epochs 50 --patience 10 --batch_size 8 # 
+python train.py --model r3d --cached --epochs 50 --patience 10 --batch_size 8
 
-# Train R3D with fine-tuning using 5-fold CV with cached data and temperature scaling
-python train.py --model r3d --cached --cv --finetune --temp --epochs 50 --patience 10 --batch_size 8
+# Train R3D with fine-tuning using cached hold-out data and temperature scaling
+python train.py --model r3d --cached --finetune --temp --epochs 50 --patience 10 --batch_size 8
+
+# Train R3D with head-only, layer4 fine-tuning, then full-backbone fine-tuning
+python train.py --model r3d --cached --finetune --full_finetune --full_ft_epochs 8 --full_ft_lr 1e-5 --temp --epochs 100 --patience 20 --batch_size 8
 
 # Train Simple3DLSTM directly from raw videos (slower) with dropout
 # (Assumes raw videos are in 'data/positive' and 'data/negative')
 # python train.py --model simple3dlstm --cv --drop 0.3 --epochs 50 --patience 10 --batch_size 4 --data_path data
 ```
 - Plots and checkpoints will be saved in `plots/` and `checkpoints/` respectively.
-- Final cross-validation results are printed to the console and logged to `wandb`.
+- Hold-out or raw-video CV results are printed to the console. Add `--wandb` to enable Weights & Biases logging.
+
+### Grad-CAM Inspection
+
+Generate a small static dashboard to inspect which regions influence model predictions. The default target layers are `net.layer4` for R3D and `cnn.10` for Simple3DLSTM.
+
+```bash
+python -m tools.gradcam_dashboard --model r3d --checkpoint checkpoints/r3d_fold1.pth --split test --limit 12
+python -m tools.gradcam_dashboard --model simple3dlstm --checkpoint checkpoints/simple3dlstm_fold1.pth --split test --limit 12
+```
+
+The dashboard is written to `gradcam_outputs/<model>_<split>/index.html`. Regenerate checkpoints after changing preprocessing before using Grad-CAM for final interpretation.
+
+For side-by-side model inspection across reproducibly sampled random frames, generate the local inspection app:
+
+```bash
+python -m tools.model_inspection_app --r3d_checkpoint checkpoints/r3d_fold1.pth --simple_checkpoint checkpoints/simple3dlstm_fold1.pth --split test --videos 12 --frames_per_video 4 --seed 42 --threshold 0.05 --r3d_temperature 0.693 --simple_temperature 0.382 --pad_value 128
+```
+
+This writes `gradcam_outputs/inspection_app/index.html` and serves it at `http://127.0.0.1:8765/index.html`. Add `--no_server` to generate the files without starting the local server.
+
+For layer-by-layer Grad-CAM inspection, generate split dashboards and an index:
+
+```bash
+python -m tools.layer_inspection_app --r3d_checkpoint checkpoints/r3d_fold1.pth --simple_checkpoint checkpoints/simple3dlstm_fold1.pth --splits val test --threshold 0.05 --r3d_temperature 0.693 --simple_temperature 0.382 --pad_value 128 --output_dir gradcam_outputs/layer_inspection_val_test --no_server
+python -m tools.layer_dashboard_index --root gradcam_outputs --output_dir gradcam_outputs/layer_inspection_index
+```
+
+The layer dashboard shows R3D `layer1`-`layer4` and Simple3DLSTM `conv1`-`conv3`. For large splits, generate train in chunks with `--start_index` and `--videos_per_split`.
 
 ### 3. Regularization Experiments (experiments/train_regularized.py)
 This script appears tailored for running quick experiments on a single hold-out split using cached data only, focusing on the effects of regularization (weight decay, dropout) and calibration (temperature scaling). It was used to generate the results in `experiments/reg_results_*.txt`.
@@ -262,7 +310,20 @@ python experiments/debug_shuffle_labels.py --model r3d --epochs 10
 
 - Expect AUC scores around 0.5 and loss around 0.69 (log(2)). The script will print a warning if AUC is significantly higher. Results are logged in `experiments/shuffling_results.txt`.
 
-### 5. Inspecting Data Splits (notebooks/inspect_splits.ipynb)
+### 5. Shortcut and Feature Distribution Audits
+
+Run these scripts before trusting high model scores:
+
+```bash
+python -m experiments.shortcut_baselines
+python -m experiments.feature_distribution_audit
+```
+
+The shortcut audit tests whether cheap non-neural signals can classify the
+current split. The feature distribution audit reports which low-level visual
+features and manifest fields differ by class.
+
+### 6. Inspecting Data Splits (notebooks/inspect_splits.ipynb)
 
 Open and run this Jupyter notebook to visually check frames from the generated `.npz` files and verify the class balance within each split.
 
@@ -271,12 +332,31 @@ Open and run this Jupyter notebook to visually check frames from the generated `
 jupyter notebook notebooks/inspect_splits.ipynb
 ```
 
+## Testing
+
+The project uses Python's built-in `unittest` framework, so no extra test
+runner is required. From the repository root, run:
+
+```bash
+python -m unittest discover -s tests
+```
+
+When using the local Windows virtual environment:
+
+```powershell
+.\asd\Scripts\python.exe -m unittest discover -s tests
+```
+
+The tests cover metric thresholding, cached split integrity, preprocessing
+helpers, and the CLI guard that prevents invalid `--cached --cv` runs.
+
 ## Experiments and Results
 
 Several experiments have been conducted and logged in the `experiments/` directory.
 
-* **Cross-Validation Performance (`experiments/train results`):**
-    * **`Simple3DLSTM`:** Achieved strong performance with 5-fold CV using cached data, resulting in a mean Test AUC of 1.000 ± 0.000 and F1-score of 0.991 ± 0.017. Temperature scaling was applied.
+* **Historical cached training logs (`experiments/train results`):**
+    * These logs were produced with `--cached --cv`, but the cached loader used the same fixed `train.npz`, `val.npz`, and `test.npz` for each fold. They should be treated as repeated hold-out runs, not validated 5-fold GroupKFold results.
+    * **`Simple3DLSTM`:** Achieved strong performance in the historical cached logs, resulting in a mean Test AUC of 1.000 ± 0.000 and F1-score of 0.991 ± 0.017 across repeated runs. Temperature scaling was applied.
     ```
     ==== 5‑fold summary ====
     auc      : 1.000 ± 0.000
@@ -287,7 +367,7 @@ Several experiments have been conducted and logged in the `experiments/` directo
     loss     : 0.079 ± 0.159
     ```
 
-    * **`R3D (Fine-tuned)`:** Also demonstrated excellent performance with 5-fold CV using cached data and fine-tuning, achieving perfect mean Test metrics (AUC=1.0, F1=1.0, Acc=1.0) across folds. Temperature scaling was applied.
+    * **`R3D (Fine-tuned)`:** Also demonstrated excellent performance in the historical cached logs, achieving perfect mean Test metrics (AUC=1.0, F1=1.0, Acc=1.0) across repeated runs. Temperature scaling was applied.
     ```
     ==== 5‑fold summary ====
     auc      : 1.000 ± 0.000
@@ -305,11 +385,44 @@ Several experiments have been conducted and logged in the `experiments/` directo
 * **Sanity Check (`experiments/shuffling_results.txt`):**
     * The label shuffle experiment confirmed that both `Simple3DLSTM` and `R3D` models performed close to random chance (Test AUCs of 0.500 and 0.570, respectively) when trained on randomly shuffled labels. This increases confidence that the models are learning meaningful patterns from the data and not exploiting data leakage or biases.
 
-*For detailed epoch-by-epoch logs, command lines, and specific metrics, please refer to the files within the `experiments/` directory.*
+* **Current gray-letterbox hold-out runs:**
+    * After rebuilding the cache with aspect-ratio-preserving gray letterbox padding, `Simple3DLSTM` and full-finetuned `R3D` both reached perfect metrics on the fixed hold-out test split. A `Simple2DCNN` frame-level ablation also reached perfect hold-out metrics, which is an important caveat: static frame/background/source cues may be enough on this split. Do not claim temporal ASD behavior has been proven without subject-level or external validation.
+
+* **Source-aware hold-out split and 50-epoch runs:**
+    * A separate cache was created in `data_source_aware/` using `--split_strategy source_aware`. The split preserved class balance, had no all-zero videos, and had no exact decoded duplicates across splits.
+    * The source-aware diagnostics still warn that the underlying dataset is class-confounded: August/September videos are all positive, `.mp4` files are all positive, and July/October are mostly negative. The split can reduce but cannot eliminate this bias.
+    * 50-epoch source-aware results:
+
+| Model | Temperature | Threshold | Test AUC | Test Acc | Test Precision | Test Recall | Test F1 | Test Loss |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Simple2DCNN | 0.488 | 0.55 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.0053 |
+| Simple3DLSTM | 0.002 | 0.05 | 0.955 | 0.955 | 1.000 | 0.909 | 0.952 | 5.4924 |
+| R3D fine-tuned | 0.546 | 0.05 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.0594 |
+
+* **Shortcut baseline audit (`experiments/shortcut_baselines.py`):**
+    * Very weak non-neural baselines were added to test whether the split can be separated by shortcuts. On the current cache, global color/brightness/padding statistics reached Test AUC `0.967`, frame-difference motion statistics reached Test AUC `1.000`, and tiny static thumbnails reached Test AUC `1.000`. Path suffix/date tokens, after excluding `positive`/`negative` folder names, were near chance with Test AUC `0.545`.
+    * On the source-aware cache, shortcuts remained strong: global color/brightness/padding Test AUC `0.901`, frame-difference motion Test AUC `1.000`, tiny static thumbnails Test AUC `0.967`, and path suffix/date tokens Test AUC `0.591`.
+    * This is the strongest current warning sign: the hold-out splits appear separable from low-level visual/source cues, so high deep-model scores should be treated as preliminary.
+
+* **Feature distribution audit (`experiments/feature_distribution_audit.py`):**
+    * Positive videos have much higher frame-difference statistics than negative videos.
+    * Negative videos are brighter and have higher green/blue channel means.
+    * Capture month is class-confounded in the current manifest: August/September are almost entirely positive, while July/October are mostly negative.
+    * All `.mp4` files in the current manifest are positive.
+
+*For detailed epoch-by-epoch logs, command lines, and specific metrics, please refer to the files within the `experiments/` directory. Current verified claims should be limited to the hold-out split unless true fold-specific CV is implemented and rerun.*
 
 ## Literature Review
 
 A review of relevant academic papers on video-based autism screening, deep learning approaches, transfer learning, and multimodal systems can be found in `docs/LiteratureReview.md`. The corresponding bibliography is available in `docs/references.bib` (marked as needing updates).
+
+## Evaluation Protocol
+
+Use `docs/EvaluationProtocol.md` as the project standard for reporting,
+hyperparameter tuning, split design, and sanity checks. In short: keep the test
+set untouched, tune only on validation data, report AUC as the primary
+threshold-free metric, and run shortcut baselines before claiming a deep model
+result.
 
 ## Branches
 

@@ -10,6 +10,10 @@ dist/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
+tmp_tests_workspace/
+tmp_tests_manual/
+tmp_tests/
+tmp_write_probe.txt
 
 # IDE files
 .vscode/
@@ -31,3 +35,7 @@ src/models/results/
 *.pt
 
 data/*.npz
+data_source_aware/*.npz
+gradcam_outputs/
+cloudflared*.log
+tools/bin/

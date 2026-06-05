@@ -1,0 +1,108 @@
+{
+  "data_dir": "data_source_aware",
+  "manifest": "data_source_aware\\split_manifest.csv",
+  "splits": {
+    "train": {
+      "count": 74,
+      "positive": 37,
+      "negative": 37
+    },
+    "val": {
+      "count": 11,
+      "positive": 5,
+      "negative": 6
+    },
+    "test": {
+      "count": 22,
+      "positive": 11,
+      "negative": 11
+    }
+  },
+  "results": [
+    {
+      "name": "majority_prior",
+      "val": {
+        "auc": 0.5,
+        "accuracy": 0.45454545454545453,
+        "precision": 0.45454545454545453,
+        "recall": 1.0,
+        "f1": 0.625
+      },
+      "test": {
+        "auc": 0.5,
+        "accuracy": 0.5,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666
+      }
+    },
+    {
+      "name": "global_color_brightness_padding",
+      "val": {
+        "auc": 0.8666666666666667,
+        "accuracy": 0.6363636363636364,
+        "precision": 0.5714285714285714,
+        "recall": 0.8,
+        "f1": 0.6666666666666666
+      },
+      "test": {
+        "auc": 0.9008264462809916,
+        "accuracy": 0.8636363636363636,
+        "precision": 0.8333333333333334,
+        "recall": 0.9090909090909091,
+        "f1": 0.8695652173913043
+      }
+    },
+    {
+      "name": "frame_difference_motion_stats",
+      "val": {
+        "auc": 1.0,
+        "accuracy": 1.0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      "test": {
+        "auc": 1.0,
+        "accuracy": 0.9545454545454546,
+        "precision": 1.0,
+        "recall": 0.9090909090909091,
+        "f1": 0.9523809523809523
+      }
+    },
+    {
+      "name": "tiny_thumbnail_static_frames",
+      "val": {
+        "auc": 1.0,
+        "accuracy": 0.7272727272727273,
+        "precision": 0.625,
+        "recall": 1.0,
+        "f1": 0.7692307692307693
+      },
+      "test": {
+        "auc": 0.9669421487603306,
+        "accuracy": 0.9545454545454546,
+        "precision": 0.9166666666666666,
+        "recall": 1.0,
+        "f1": 0.9565217391304348
+      }
+    },
+    {
+      "name": "path_suffix_date_tokens",
+      "val": {
+        "auc": 0.5,
+        "accuracy": 0.5454545454545454,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      "test": {
+        "auc": 0.5909090909090909,
+        "accuracy": 0.5909090909090909,
+        "precision": 1.0,
+        "recall": 0.18181818181818182,
+        "f1": 0.3076923076923077
+      }
+    }
+  ]
+}

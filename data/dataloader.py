@@ -7,6 +7,8 @@ from torchvision import transforms
 from sklearn.model_selection import train_test_split
 import random
 
+from data.video_utils import resize_with_letterbox
+
 # ───────────────────────────── Frame-level augment ────────────────────────────
 def build_frame_aug(target_size):
     """Random spatial/colour aug + correct normalisation."""
@@ -58,13 +60,13 @@ class VideoDataset(Dataset):
             if not ret:
                 continue
             fr = cv2.cvtColor(fr, cv2.COLOR_BGR2RGB)
-            fr = cv2.resize(fr, self.target_size)
+            fr = resize_with_letterbox(fr, self.target_size)
             frames.append(fr)
         cap.release()
 
         # Pad if needed
         if len(frames) < self.max_frames:
-            pad = np.zeros((*self.target_size, 3), np.uint8)
+            pad = np.full((*self.target_size, 3), 128, np.uint8)
             frames += [pad] * (self.max_frames - len(frames))
 
         vid = np.stack(frames).astype(np.float32) / 255.0

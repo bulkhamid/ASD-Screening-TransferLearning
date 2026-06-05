@@ -1,4 +1,6 @@
 # ── src/data_cached.py ───────────────────────────────────────────────────────
+from pathlib import Path
+
 import numpy as np, torch, random
 import functools
 from torch.utils.data import TensorDataset, DataLoader
@@ -13,8 +15,9 @@ IMAGENET_STD  = [0.229, 0.224, 0.225]
 #     produced.  Shape on disk = (N,T,H,W,C) uint8.  Returned tensors are
 #     (N,C,T,H,W) float32 in [0,1].
 # ---------------------------------------------------------------------------#
-def load_split(split):
-    npz   = np.load(f"data/{split}.npz", mmap_mode="r")
+def load_split(split, data_dir="data"):
+    npz_path = Path(data_dir) / f"{split}.npz"
+    npz   = np.load(npz_path, mmap_mode="r")
     vids  = torch.from_numpy(npz["X"]).permute(0,4,1,2,3).float() / 255.
     labels= torch.from_numpy(npz["y"]).float()
     return TensorDataset(vids, labels)
@@ -46,11 +49,25 @@ def _normalize_tensor(video_5d):
 # ---------------------------------------------------------------------------#
 # 2.  Ready‑made DataLoader builders
 # ---------------------------------------------------------------------------#
-def _train_collate(batch, frame_aug=None, aug_p=0.5):
+def _jitter_padding(video_5d, pad_value=128, jitter=0):
+    if jitter <= 0:
+        return video_5d
+    pad = pad_value / 255.0
+    mask = (video_5d - pad).abs().amax(dim=0, keepdim=True) < (1.0 / 255.0)
+    if not bool(mask.any()):
+        return video_5d
+    low = max(0, pad_value - jitter) / 255.0
+    high = min(255, pad_value + jitter) / 255.0
+    fill = torch.empty_like(video_5d).uniform_(low, high)
+    return torch.where(mask.expand_as(video_5d), fill, video_5d)
+
+
+def _train_collate(batch, frame_aug=None, aug_p=0.5, pad_jitter=0, pad_value=128):
     vids, lbls = zip(*batch)
     out = []
     to_pil = ToPILImage()  
     for v in vids:
+        v = _jitter_padding(v, pad_value=pad_value, jitter=pad_jitter)
         if frame_aug is not None and random.random() < aug_p:
             frs = [frame_aug(to_pil(v[:, t]))       # convert → PIL → aug
                    for t in range(v.shape[1])]
@@ -62,15 +79,20 @@ def _train_collate(batch, frame_aug=None, aug_p=0.5):
 
 
 def make_train_loader(batch_size,
+                      data_dir="data",
                       aug_p=0.5,
                       target_size=(224, 224),
                       shuffle=True,
-                      num_workers=4):
-    ds        = load_split("train")
+                      num_workers=4,
+                      pad_jitter=0,
+                      pad_value=128):
+    ds        = load_split("train", data_dir=data_dir)
     frame_aug = build_frame_aug(target_size)
     collate   = functools.partial(_train_collate,
                                   frame_aug=frame_aug,
-                                  aug_p=aug_p)
+                                  aug_p=aug_p,
+                                  pad_jitter=pad_jitter,
+                                  pad_value=pad_value)
     return DataLoader(ds,
                       batch_size=batch_size,
                       shuffle=shuffle,
@@ -86,8 +108,9 @@ def _eval_collate(batch):
 
 def make_eval_loader(split,
                      batch_size,
+                     data_dir="data",
                      num_workers=4):
-    ds = load_split(split)
+    ds = load_split(split, data_dir=data_dir)
     return DataLoader(ds,
                       batch_size=batch_size,
                       shuffle=False,
