@@ -1,76 +1,80 @@
-# temperature_scaling.py ----------------------------------------------------
-import torch, torch.nn as nn, torch.optim as optim
-from torch.nn import functional as F
+"""Bounded, experimental temperature scaling for raw-logit classifiers."""
 
-class _LogitWrapper(nn.Module):
-    """Expose the model’s raw logit (pre‑sigmoid) for BCE logits‑loss."""
-    def __init__(self, net):           # net returns probability or logit?
-        super().__init__()
-        self.net = net
+import math
 
-    def forward(self, x):
-        out = self.net(x)
-        # If the model already outputs a logit tensor of shape (B,1) leave it.
-        # If it outputs a probability in [0,1], convert to logit domain.
-        if (out.detach() <= 0).any() or (out.detach() >= 1).any():
-            return out          # assume logits
-        logit = torch.logit(out.clamp(1e-6, 1-(1e-6)))
-        return logit
+import torch
+import torch.nn as nn
+import torch.optim as optim
+
 
 class TemperatureScaler(nn.Module):
-    """Learns a single scalar T > 0 to rescale logits: logit/T."""
-    def __init__(self, model):
-        super().__init__()
-        self.model = model
-        self.net   = model
-        # old  : self.temperature = nn.Parameter(torch.ones(1))
-        # new ▼ log_T initialised at log(1.0) = 0.0
-        # self.log_T = nn.Parameter(torch.zeros(1))
-        self.log_T = nn.Parameter(torch.zeros(1))   # log T (so   T = e^{log_T})
+    """Learn a bounded scalar T using an independent calibration loader."""
 
-        # ── cosmetic alias so other code can still access `.temperature`
-        #    (used only for printing, not in forward pass)
-        self.register_buffer("temperature", torch.exp(self.log_T).detach())
+    def __init__(self, model, minimum=0.05, maximum=10.0):
+        super().__init__()
+        if not 0 < minimum < 1 < maximum:
+            raise ValueError("Temperature bounds must satisfy 0 < minimum < 1 < maximum")
+        self.model = model
+        self.net = model
+        self.minimum = float(minimum)
+        self.maximum = float(maximum)
+        self.log_T = nn.Parameter(torch.zeros(1))
+        self.nll_before = None
+        self.nll_after = None
+        self.at_boundary = False
+
+    @property
+    def temperature(self):
+        return self.log_T.exp().clamp(self.minimum, self.maximum)
 
     def forward(self, x):
-        logits = self.model(x)
-        T = self.log_T.exp()
-        return logits / T
+        return self.model(x) / self.temperature
 
-    # ------------------------------------------------------------------
-    def set_temperature(self, loader, device='cuda'):
-        """Fit T on a held‑out calib/val loader by minimising NLL."""
+    def set_temperature(self, loader, device="cuda"):
+        """Fit T with BCEWithLogitsLoss; use independent calibration subjects."""
+        device = torch.device(device)
         self.to(device)
         self.eval()
-
-        nll_criterion = nn.BCELoss()
-
-        # Collect all logits & labels ----------------------------------
+        criterion = nn.BCEWithLogitsLoss()
         logits_list, labels_list = [], []
         with torch.no_grad():
-            for X, y in loader:
-                X, y = X.to(device), y.to(device)
-                logits = self.net(X).view(-1)
-                logits_list.append(logits)
-                labels_list.append(y.float().view(-1))
-        logits = torch.cat(logits_list)
-        labels = torch.cat(labels_list)
+            for inputs, labels in loader:
+                inputs = inputs.to(device)
+                logits_list.append(self.net(inputs).float().view(-1))
+                labels_list.append(labels.to(device).float().view(-1))
+        if not logits_list:
+            raise ValueError("Calibration loader is empty")
+        logits = torch.cat(logits_list).detach().cpu()
+        labels = torch.cat(labels_list).detach().cpu()
 
-        # single‑parameter optimisation -------------------------------
-        # LBFGS is picky on GPU; run it on CPU for numerical safety
-        self.log_T.data = self.log_T.data.cpu()
-        optimiser = optim.LBFGS([self.log_T], lr=0.05, max_iter=50)
+        self.log_T.data = torch.zeros_like(self.log_T.data, device="cpu")
+        self.nll_before = float(criterion(logits, labels))
+        optimizer = optim.LBFGS(
+            [self.log_T], lr=0.1, max_iter=100, line_search_fn="strong_wolfe"
+        )
 
-        def _eval():
-            optimiser.zero_grad()
-            T    = self.log_T.exp()                    # ← convert to real temperature
-            loss = nll_criterion(torch.sigmoid(logits.cpu() / T), labels.cpu())
+        def closure():
+            optimizer.zero_grad()
+            temperature = self.log_T.exp().clamp(self.minimum, self.maximum)
+            loss = criterion(logits / temperature, labels)
             loss.backward()
             return loss
 
-        optimiser.step(_eval)
-        # move back to original device & refresh the alias
+        optimizer.step(closure)
+        with torch.no_grad():
+            self.log_T.clamp_(math.log(self.minimum), math.log(self.maximum))
+            calibrated = criterion(logits / self.temperature.detach().cpu(), labels)
+            self.nll_after = float(calibrated)
+            if self.nll_after > self.nll_before + 1e-8:
+                self.log_T.zero_()
+                self.nll_after = self.nll_before
+            value = float(self.temperature.detach().cpu())
+            self.at_boundary = (
+                abs(value - self.minimum) < 1e-6 or abs(value - self.maximum) < 1e-6
+            )
         self.log_T.data = self.log_T.data.to(device)
-        self.temperature = self.log_T.exp().detach()
-        print(f'>> optimal T = {self.temperature.item():.3f}')
+        print(
+            f">> experimental calibration T={value:.4f} "
+            f"NLL {self.nll_before:.4f}->{self.nll_after:.4f} boundary={self.at_boundary}"
+        )
         return self

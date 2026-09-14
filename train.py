@@ -1,20 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
-"""
-Cross‑validated training for ASD video screening.
+"""Legacy video-level holdout trainer.
 
-Works with either:
-  • Simple3DLSTM  (with optional 3‑D dropout)
-  • Pre‑trained R3D‑18  (head‑only or light fine‑tune)  
-
-Key features
-------------
-* GroupKFold 5‑split CV (‑‑cv)  or 70/10/20 hold‑out
-* Cached *.npz tensors supported (‑‑cached)
-* AdamW + cosine LR, AMP, early‑stopping
-* Temperature‑scaling calibration (‑‑temp)
-* Automatic threshold chosen on validation F1
-* Loss/AUC curves & ROC plots saved for every fold
+This entry point is retained for checkpoint compatibility and development-only
+audits. It cannot run cross-validation and requires an explicit legacy
+acknowledgement. Use ``experiments.run_subject_benchmark`` for grouped research
+evaluation.
 """
 
 # --------------------------------------------------------------------------- #
@@ -28,7 +19,7 @@ import numpy as np
 import torch, torch.nn as nn, torch.optim as optim
 from torch.amp import autocast, GradScaler
 from torch.utils.data import DataLoader
-from sklearn.model_selection import GroupKFold, train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (f1_score, roc_auc_score, accuracy_score,
                              precision_score, recall_score, roc_curve, auc)
 
@@ -89,17 +80,19 @@ def eval_loader(model, loader, device):
         ys.extend(y.cpu().numpy())
         running_loss += loss.item()
     probs = torch.sigmoid(torch.tensor(logits)).numpy()
-    metrics = compute_metrics(np.array(ys), probs)
+    metrics = compute_metrics(np.array(ys), probs, ranking_scores=np.array(logits))
     metrics["loss"] = running_loss / len(loader.dataset)
     return metrics, np.array(ys), probs, np.array(logits)
 
-def calibrate_and_threshold(model, val_loader, device, apply_ts):
+def calibrate_and_threshold(model, val_loader, device, apply_ts, tune_threshold=False):
     """Optionally learn a temperature scalar, then choose F1‑optimal threshold."""
     net = (TemperatureScaler(model)
            .set_temperature(val_loader, device)) if apply_ts else model
     _, y, p, _ = eval_loader(net, val_loader, device)
-    ths = np.linspace(0.05, 0.95, 19)
-    thr = float(ths[np.argmax([f1_score(y, p >= t) for t in ths])])
+    thr = 0.5
+    if tune_threshold:
+        ths = np.linspace(0.05, 0.95, 19)
+        thr = float(ths[np.argmax([f1_score(y, p >= t) for t in ths])])
     return net, thr
 
 def plot_curves(curve_dict, fpath_prefix):
@@ -192,7 +185,7 @@ def main():
     # data / cv
     parser.add_argument("--data_path", default="data")
     parser.add_argument("--cv", action="store_true", default=False,
-                        help="use 5-fold GroupKFold for raw video input only")
+                        help="disabled; retained only to fail old commands clearly")
     parser.add_argument("--cached", action="store_true",
                         help="load pre-processed .npz tensors")
     parser.add_argument("--splits", type=int, default=5)
@@ -221,7 +214,13 @@ def main():
     parser.add_argument("--patience", type=int, default=10)
     parser.add_argument("--wd", type=float,  default=1e-4)
     parser.add_argument("--temp", action="store_true",
-                        help="enable temperature scaling")
+                        help="enable experimental temperature scaling")
+    parser.add_argument("--experimental_calibration", action="store_true",
+                        help="acknowledge calibration requires independent calibration subjects")
+    parser.add_argument("--tune_threshold", action="store_true",
+                        help="legacy-only validation F1 threshold tuning; default is fixed 0.5")
+    parser.add_argument("--legacy_holdout_ack", action="store_true",
+                        help="acknowledge train.py is a legacy video-level development workflow")
     # misc
     parser.add_argument("--max_frames", type=int, default=60)
     parser.add_argument("--target_size", nargs=2, type=int, default=[112, 112])
@@ -230,13 +229,20 @@ def main():
     parser.add_argument("--wandb_project", default="ASD-SubjectCV")
     cfg = parser.parse_args()
 
-    if cfg.cached and cfg.cv:
+    if cfg.cv:
         parser.error(
-            "--cached --cv is disabled because the current cache contains one "
-            "fixed train/val/test split, not fold-specific cached splits. "
-            "Use --cached without --cv for hold-out evaluation, or rebuild "
-            "fold-specific caches before running CV."
+            "--cv is disabled: raw filenames and legacy caches do not contain "
+            "verified subject IDs. Use experiments.run_subject_benchmark with "
+            "completed private subject/session metadata."
         )
+    if not cfg.legacy_holdout_ack:
+        parser.error(
+            "train.py is restricted to legacy holdout development. Pass "
+            "--legacy_holdout_ack only for an explicitly non-inferential legacy run; "
+            "use experiments.run_subject_benchmark for grouped evaluation."
+        )
+    if cfg.temp and not cfg.experimental_calibration:
+        parser.error("--temp requires --experimental_calibration")
     if cfg.use_wandb:
         global wandb
         try:
@@ -253,7 +259,7 @@ def main():
 
     if cfg.use_wandb:
         wandb.init(project=cfg.wandb_project,
-                   name=f"{cfg.model}_{'cv' if cfg.cv else 'hold'}",
+                   name=f"{cfg.model}_legacy_holdout",
                    config=vars(cfg))
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -264,28 +270,25 @@ def main():
         subs = np.array([Path(p).stem for p in paths])
 
         splits = []
-        if cfg.cv:
-            gkf = GroupKFold(cfg.splits)
-            for i, (tr, rest) in enumerate(gkf.split(paths, labels, subs), 1):
-                val, test = train_test_split(rest, test_size=.5,
-                                             stratify=labels[rest], random_state=i)
-                splits.append((tr, val, test))
-        else:  # single 70/10/20 split
-            uniq = np.unique(subs)
-            strat = np.array([labels[subs == u][0] for u in uniq])
-            tr_s, te_s = train_test_split(uniq, test_size=.20,
-                                          stratify=strat, random_state=42)
-            tr_s, vl_s = train_test_split(tr_s, test_size=.125,
-                                          stratify=[strat[list(uniq).index(u)] for u in tr_s],
-                                          random_state=42)
-            tr  = np.where(np.isin(subs, tr_s))[0]
-            val = np.where(np.isin(subs, vl_s))[0]
-            test= np.where(np.isin(subs, te_s))[0]
-            splits.append((tr, val, test))
+        uniq = np.unique(subs)
+        strat = np.array([labels[subs == subject][0] for subject in uniq])
+        tr_s, te_s = train_test_split(
+            uniq, test_size=.20, stratify=strat, random_state=42
+        )
+        tr_s, vl_s = train_test_split(
+            tr_s,
+            test_size=.125,
+            stratify=[strat[list(uniq).index(subject)] for subject in tr_s],
+            random_state=42,
+        )
+        tr = np.where(np.isin(subs, tr_s))[0]
+        val = np.where(np.isin(subs, vl_s))[0]
+        test = np.where(np.isin(subs, te_s))[0]
+        splits.append((tr, val, test))
 
     # ------------------ loop over folds ------------------ #
     fold_metrics = []
-    for fold_idx, split in enumerate(range(cfg.splits) if cfg.cv else [0], 1):
+    for fold_idx, split in enumerate([0], 1):
         print(f"\n==== Fold {fold_idx} ====")
 
         # loaders ----------------------------------------------------------------
@@ -358,12 +361,14 @@ def main():
                 curves[k].extend(v)
 
         # --------------- calibration + threshold -----------
-        infer_net, thr = calibrate_and_threshold(model, vl_loader, device, cfg.temp)
+        infer_net, thr = calibrate_and_threshold(
+            model, vl_loader, device, cfg.temp, tune_threshold=cfg.tune_threshold
+        )
 
         # --------------- evaluation -----------------------
         vl_m, _, _, _ = eval_loader(infer_net, vl_loader, device)
-        te_m_raw, ys_te, ps_te, _ = eval_loader(infer_net, te_loader, device)
-        te_m = compute_metrics(ys_te, ps_te, threshold=thr)
+        te_m_raw, ys_te, ps_te, logits_te = eval_loader(infer_net, te_loader, device)
+        te_m = compute_metrics(ys_te, ps_te, threshold=thr, ranking_scores=logits_te)
         te_m["loss"] = te_m_raw["loss"]
         print(f"TEST  AUC={te_m['auc']:.3f}  threshold={thr:.2f}  "
               f"F1={te_m['f1']:.3f}  loss={te_m['loss']:.4f}")
@@ -381,10 +386,10 @@ def main():
     mean    = {k: float(np.mean(v)) for k, v in df.items()}
     std     = {k: float(np.std (v)) for k, v in df.items()}
 
-    print(f"\n==== {'5-fold' if cfg.cv else 'hold-out'} summary ====")
+    print("\n==== legacy hold-out summary ====")
     for k in df_keys:
         print(f"{k:9s}: {mean[k]:.3f} +/- {std[k]:.3f}")
-    prefix = "cv" if cfg.cv else "holdout"
+    prefix = "legacy_holdout"
     wandb_log(cfg.use_wandb, {f"{prefix}_mean_{k}": mean[k] for k in df_keys})
     wandb_log(cfg.use_wandb, {f"{prefix}_std_{k}":  std[k]  for k in df_keys})
     wandb_finish(cfg.use_wandb)

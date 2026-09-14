@@ -1,111 +1,107 @@
-# Evaluation and Tuning Protocol
+# Subject-Grouped Evaluation Protocol
 
-This protocol is the standard to use before reporting new ASD screening model
-results.
+## Objective
 
-## Current Risk
+Estimate how models rank and classify previously unseen subjects. Videos,
+sessions, clips, and frames are repeated observations, not independent samples.
 
-The current hold-out split is not strong enough to support a generalization
-claim. Simple non-neural baselines can almost perfectly classify the test split:
+## Eligibility Gate
 
-| Baseline | Test AUC | Test accuracy | Test F1 |
-| --- | ---: | ---: | ---: |
-| Global color/brightness/padding stats | 0.967 | 0.955 | 0.952 |
-| Frame-difference motion stats | 1.000 | 0.955 | 0.952 |
-| Tiny static thumbnails | 1.000 | 0.955 | 0.952 |
+An inferential run must abort unless:
 
-A source-aware cache reduced some split randomness but did not remove shortcut
-predictability:
+- every included video has one pseudonymous subject and session;
+- each subject has one consistent label;
+- each session belongs to exactly one subject;
+- no subject or session crosses train, validation, and test roles;
+- each class contains at least three subjects;
+- the clip cache passes shape, mask, padding, zero-video, hash, and exact
+  cross-subject duplicate checks.
 
-| Baseline on source-aware cache | Test AUC | Test accuracy | Test F1 |
-| --- | ---: | ---: | ---: |
-| Global color/brightness/padding stats | 0.901 | 0.864 | 0.870 |
-| Frame-difference motion stats | 1.000 | 0.955 | 0.952 |
-| Tiny static thumbnails | 0.967 | 0.955 | 0.957 |
+## Nested Subject Splitting
 
-The feature distribution audit also shows class-correlated source artifacts:
+- Build up to five stratified outer folds from unique subjects using split seed
+  `42`. Use fewer folds when the minority class has fewer than five subjects.
+- Expand subject assignments to all sessions and videos.
+- Select validation subjects only from the outer training subjects with a fixed
+  split derived from the outer fold number.
+- Keep outer test subjects inaccessible until all stages have finished and the
+  globally best validation-NLL checkpoint has been restored.
+- Reuse one fixed fold assignment for training seeds `42`, `43`, and `44`.
 
-- Positive videos have much higher frame-difference statistics.
-- Negative videos are brighter and have higher green/blue channel means.
-- Capture month is confounded with class: August/September videos are almost
-  entirely positive, while July/October videos are mostly negative.
-- Positive videos include all `.mp4` files in the current manifest.
+This is internal nested grouped validation. It is not an external test because
+all subjects come from the same collected dataset.
 
-These findings mean deep model performance may be driven by source, recording,
-background, lighting, or framing cues.
+## Preprocessing
 
-The current best stricter split is `data_source_aware/`, but it is still not a
-valid substitute for subject/source-independent external testing.
+- Cache five deterministic clips per video.
+- Each clip contains 16 frames sampled at 15 FPS.
+- Place clip starts uniformly from the beginning to the latest valid start.
+- Letterbox to `112x112` with gray `128` and preserve the content mask.
+- Apply crop scale `0.9-1.0`, aspect ratio `0.95-1.05`, horizontal flip `0.5`,
+  and color jitter `0.1` consistently to the full clip.
+- Remove per-frame rotation and random erasing.
+- Use Kinetics-400 V1 mean/std for R3D.
+- Compute simple-model RGB mean/std from content pixels of inner-training
+  subjects only.
+- Force padding to normalized value zero.
 
-## Required Reporting Standard
+## Training
 
-- Report current results as fixed hold-out results only.
-- Do not call cached results 5-fold CV unless fold-specific cached splits are
-  created and each fold trains from scratch.
-- Use AUC as the primary metric because it is threshold-free.
-- Report thresholded metrics only with the threshold selection rule clearly
-  stated.
-- Report temperature scaling separately and cautiously because the validation
-  set is small.
-- Always include the shortcut baseline audit next to deep model results.
+- Loss: `BCEWithLogitsLoss`, which combines sigmoid and binary cross-entropy in
+  a stable operation. Heads return raw logits.
+- Sampling: four draws per subject per epoch, with random session, video, clip.
+- Simple models: at most 50 epochs, patience 8 on subject-level validation NLL.
+- Simple3DLSTM v2: gradient clipping at 1.0.
+- R3D: head 15 epochs at `1e-3`; `layer4 + fc` 20 at `1e-4`; full backbone 8
+  at `1e-5`; patience 8 in each stage.
+- Freeze all R3D BatchNorm statistics and affine parameters during transfer.
+- Compare validation NLL globally across every stage, not only within a stage.
 
-## Hyperparameter Tuning
+## Prediction Unit
 
-- Keep the test set untouched until final reporting.
-- Choose hyperparameters using only the training and validation sets.
-- Use validation loss for early stopping.
-- Use validation metrics for threshold selection.
-- Prefer a small predefined grid over exploratory tuning after seeing test
-  performance.
-- If enough grouped data exists, use nested grouped CV:
-  - inner loop: hyperparameter and threshold selection;
-  - outer loop: unbiased performance estimation.
-- If the dataset remains small, prefer one conservative configuration and
-  repeated grouped hold-outs over a large tuning search.
+Average raw logits hierarchically:
 
-## Split Requirements
+1. clips to video;
+2. videos to session;
+3. sessions to subject.
 
-Preferred split priority:
+This gives sessions and subjects equal weight even when they contain different
+numbers of recordings.
 
-1. External test set from a separate source/site/session.
-2. Subject-level split where the same child never appears in more than one
-   split.
-3. Source/session-level split where capture date, device, room/background, and
-   collection batch are balanced across labels.
-4. Random file-level split only for debugging, not for final claims.
+## Metrics
 
-Minimum manifest fields for trustworthy splitting:
+Primary metric: subject-level ROC AUC computed directly from raw logits.
 
-- subject ID;
-- session/source ID;
-- capture date or batch;
-- camera/device/site when available;
-- raw video path;
-- label;
-- split/fold;
-- raw file hash;
-- decoded frame-array hash.
+Also report:
 
-## Required Sanity Checks
+- PR AUC;
+- balanced accuracy;
+- sensitivity and specificity;
+- precision and F1;
+- confusion matrix;
+- NLL and Brier score;
+- stratified subject-bootstrap 95% confidence intervals.
 
-Run these before claiming a result:
+Use the fixed probability threshold `0.5` (equivalently logit `0`). Do not tune
+thresholds. Temperature scaling is disabled in primary runs. Any calibration
+experiment must use subjects separate from training, checkpoint validation, and
+outer testing, report pre/post NLL, and disclose boundary solutions.
 
-```powershell
-.\asd\Scripts\python.exe -m experiments.shortcut_baselines
-.\asd\Scripts\python.exe -m experiments.feature_distribution_audit
-.\asd\Scripts\python.exe -m experiments.debug_shuffle_labels --model simple3dlstm --epochs 20 --batch_size 8
-.\asd\Scripts\python.exe -m experiments.debug_shuffle_labels --model r3d --epochs 20 --batch_size 8
-.\asd\Scripts\python.exe -m unittest discover -s tests -v
-```
+## Negative Controls
 
-## External Guidance
+- Capture-date-grouped shortcut models for duration, resolution, extension,
+  capture time, color, padding, motion, and thumbnails.
+- Perceptual embedding nearest-neighbor review across different subjects.
+- Training-subject label permutations; validation and test labels never move.
+- Five complete Simple2DCNN permutations and one complete grouped permutation
+  for Simple3DLSTM v2 and R3D.
+- Temporal tests: normal, reversed, shuffled, and repeated-middle frames.
+- Grad-CAM targeted separately to positive and negative evidence.
 
-- scikit-learn documents cross-validation, model selection, and nested CV as
-  tools for separating model selection from performance evaluation:
-  https://scikit-learn.org/stable/model_selection.html
-- TRIPOD+AI emphasizes transparent reporting of prediction model development
-  and validation:
-  https://www.tripod-statement.org/scope/
-- CLAIM 2024 recommends clear reporting of AI evaluation and uses external
-  testing terminology for evaluation on data from another source:
-  https://pmc.ncbi.nlm.nih.gov/articles/PMC11304031/
+## Reporting
+
+Never describe legacy NPZ results as cross-validation or independent test
+performance. Report the number of subjects, sessions, videos, class counts,
+folds, seeds, exclusions, duplicate findings, and all uncertainty intervals.
+State explicitly that this dataset cannot establish clinical validity or
+generalization to new sites, devices, demographics, or collection protocols.

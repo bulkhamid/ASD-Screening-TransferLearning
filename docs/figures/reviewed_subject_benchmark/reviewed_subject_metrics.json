@@ -1,0 +1,2404 @@
+{
+  "configuration_sha256": "709186e162de9b52d89a578b75f35d9ea32ef1ee766539761ea197724d583446",
+  "completed_runs": 45,
+  "models": {
+    "simple2dcnn": {
+      "ablations": {
+        "normal": {
+          "ensemble": {
+            "roc_auc": 0.9973045822102427,
+            "pr_auc": 0.9974489795918369,
+            "accuracy": 0.9901960784313726,
+            "balanced_accuracy": 0.9897959183673469,
+            "sensitivity": 0.9795918367346939,
+            "specificity": 1.0,
+            "precision": 1.0,
+            "f1": 0.9896907216494846,
+            "nll": 0.05511493010497797,
+            "brier": 0.0132239860893587,
+            "confusion_matrix": [
+              [
+                53,
+                0
+              ],
+              [
+                1,
+                48
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 0.9976896418944937,
+              "pr_auc": 0.9977736549165123,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9897959183673469,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9896907216494846,
+              "nll": 0.049683702900942615,
+              "brier": 0.011308750218111506,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 0.9957643434732384,
+              "pr_auc": 0.9962585034013607,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9897959183673469,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9896907216494846,
+              "nll": 0.05623253746175935,
+              "brier": 0.012260749176976228,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9961494031574895,
+              "pr_auc": 0.9965409892770669,
+              "accuracy": 0.9705882352941176,
+              "balanced_accuracy": 0.970927993839045,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 0.9622641509433962,
+              "precision": 0.96,
+              "f1": 0.9696969696969697,
+              "nll": 0.07128171761893075,
+              "brier": 0.019279933792706067,
+              "confusion_matrix": [
+                [
+                  51,
+                  2
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9965344628417405,
+          "sd_seed_auc": 0.001018772164445374
+        },
+        "reversed": {
+          "ensemble": {
+            "roc_auc": 0.9973045822102427,
+            "pr_auc": 0.9974489795918369,
+            "accuracy": 0.9901960784313726,
+            "balanced_accuracy": 0.9897959183673469,
+            "sensitivity": 0.9795918367346939,
+            "specificity": 1.0,
+            "precision": 1.0,
+            "f1": 0.9896907216494846,
+            "nll": 0.05511493010497797,
+            "brier": 0.0132239860893587,
+            "confusion_matrix": [
+              [
+                53,
+                0
+              ],
+              [
+                1,
+                48
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 0.9976896418944937,
+              "pr_auc": 0.9977736549165123,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9897959183673469,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9896907216494846,
+              "nll": 0.049683702900942615,
+              "brier": 0.011308750218111506,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 0.9957643434732384,
+              "pr_auc": 0.9962585034013607,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9897959183673469,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9896907216494846,
+              "nll": 0.05623253746175935,
+              "brier": 0.012260749176976228,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9961494031574895,
+              "pr_auc": 0.9965409892770669,
+              "accuracy": 0.9705882352941176,
+              "balanced_accuracy": 0.970927993839045,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 0.9622641509433962,
+              "precision": 0.96,
+              "f1": 0.9696969696969697,
+              "nll": 0.07128171761893075,
+              "brier": 0.019279933792706067,
+              "confusion_matrix": [
+                [
+                  51,
+                  2
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9965344628417405,
+          "sd_seed_auc": 0.001018772164445374
+        },
+        "shuffled": {
+          "ensemble": {
+            "roc_auc": 0.9973045822102427,
+            "pr_auc": 0.9974489795918369,
+            "accuracy": 0.9901960784313726,
+            "balanced_accuracy": 0.9897959183673469,
+            "sensitivity": 0.9795918367346939,
+            "specificity": 1.0,
+            "precision": 1.0,
+            "f1": 0.9896907216494846,
+            "nll": 0.05511493010497797,
+            "brier": 0.0132239860893587,
+            "confusion_matrix": [
+              [
+                53,
+                0
+              ],
+              [
+                1,
+                48
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 0.9976896418944937,
+              "pr_auc": 0.9977736549165123,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9897959183673469,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9896907216494846,
+              "nll": 0.049683702900942615,
+              "brier": 0.011308750218111506,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 0.9957643434732384,
+              "pr_auc": 0.9962585034013607,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9897959183673469,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9896907216494846,
+              "nll": 0.05623253746175935,
+              "brier": 0.012260749176976228,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9961494031574895,
+              "pr_auc": 0.9965409892770669,
+              "accuracy": 0.9705882352941176,
+              "balanced_accuracy": 0.970927993839045,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 0.9622641509433962,
+              "precision": 0.96,
+              "f1": 0.9696969696969697,
+              "nll": 0.07128171761893075,
+              "brier": 0.019279933792706067,
+              "confusion_matrix": [
+                [
+                  51,
+                  2
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9965344628417405,
+          "sd_seed_auc": 0.001018772164445374
+        },
+        "static": {
+          "ensemble": {
+            "roc_auc": 0.9969195225259916,
+            "pr_auc": 0.9971356963838168,
+            "accuracy": 0.9901960784313726,
+            "balanced_accuracy": 0.9897959183673469,
+            "sensitivity": 0.9795918367346939,
+            "specificity": 1.0,
+            "precision": 1.0,
+            "f1": 0.9896907216494846,
+            "nll": 0.057362549630124604,
+            "brier": 0.013559434122448243,
+            "confusion_matrix": [
+              [
+                53,
+                0
+              ],
+              [
+                1,
+                48
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 0.9976896418944937,
+              "pr_auc": 0.9977736549165123,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9897959183673469,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9896907216494846,
+              "nll": 0.051440680101978685,
+              "brier": 0.011750270949362462,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 0.9946091644204853,
+              "pr_auc": 0.9954648526077099,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9897959183673469,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9896907216494846,
+              "nll": 0.059670644988239006,
+              "brier": 0.012450116989201745,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9957643434732384,
+              "pr_auc": 0.9962585034013607,
+              "accuracy": 0.9705882352941176,
+              "balanced_accuracy": 0.970927993839045,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 0.9622641509433962,
+              "precision": 0.96,
+              "f1": 0.9696969696969697,
+              "nll": 0.07280261115892672,
+              "brier": 0.01955454295448999,
+              "confusion_matrix": [
+                [
+                  51,
+                  2
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9960210499294059,
+          "sd_seed_auc": 0.001556200186494925
+        }
+      },
+      "runs": [
+        {
+          "fold": 1,
+          "seed": 42,
+          "epochs": 29,
+          "stage_epochs": {
+            "full": 29
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 21,
+            "best_stage": "full",
+            "best_validation_loss": 0.03928934963028498,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 1,
+          "seed": 43,
+          "epochs": 24,
+          "stage_epochs": {
+            "full": 24
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 16,
+            "best_stage": "full",
+            "best_validation_loss": 0.020096222388015256,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 1,
+          "seed": 44,
+          "epochs": 24,
+          "stage_epochs": {
+            "full": 24
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 16,
+            "best_stage": "full",
+            "best_validation_loss": 0.09955633778943518,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 2,
+          "seed": 42,
+          "epochs": 39,
+          "stage_epochs": {
+            "full": 39
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 31,
+            "best_stage": "full",
+            "best_validation_loss": 0.09335958132030675,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 2,
+          "seed": 43,
+          "epochs": 23,
+          "stage_epochs": {
+            "full": 23
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 15,
+            "best_stage": "full",
+            "best_validation_loss": 0.12428092933708283,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 2,
+          "seed": 44,
+          "epochs": 31,
+          "stage_epochs": {
+            "full": 31
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 23,
+            "best_stage": "full",
+            "best_validation_loss": 0.09111547782573197,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 3,
+          "seed": 42,
+          "epochs": 45,
+          "stage_epochs": {
+            "full": 45
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 37,
+            "best_stage": "full",
+            "best_validation_loss": 0.007380984414728386,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 3,
+          "seed": 43,
+          "epochs": 50,
+          "stage_epochs": {
+            "full": 50
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 45,
+            "best_stage": "full",
+            "best_validation_loss": 0.004690881005210037,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 3,
+          "seed": 44,
+          "epochs": 46,
+          "stage_epochs": {
+            "full": 46
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 38,
+            "best_stage": "full",
+            "best_validation_loss": 0.007105870441110308,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 4,
+          "seed": 42,
+          "epochs": 44,
+          "stage_epochs": {
+            "full": 44
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 36,
+            "best_stage": "full",
+            "best_validation_loss": 0.027702036348575428,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 4,
+          "seed": 43,
+          "epochs": 47,
+          "stage_epochs": {
+            "full": 47
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 39,
+            "best_stage": "full",
+            "best_validation_loss": 0.006547358158897019,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 4,
+          "seed": 44,
+          "epochs": 39,
+          "stage_epochs": {
+            "full": 39
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 31,
+            "best_stage": "full",
+            "best_validation_loss": 0.04598524922756888,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 5,
+          "seed": 42,
+          "epochs": 33,
+          "stage_epochs": {
+            "full": 33
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 25,
+            "best_stage": "full",
+            "best_validation_loss": 0.08770526861488917,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 5,
+          "seed": 43,
+          "epochs": 26,
+          "stage_epochs": {
+            "full": 26
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 18,
+            "best_stage": "full",
+            "best_validation_loss": 0.0974219925049338,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 5,
+          "seed": 44,
+          "epochs": 29,
+          "stage_epochs": {
+            "full": 29
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 21,
+            "best_stage": "full",
+            "best_validation_loss": 0.09964778894060823,
+            "metric": "subject_nll"
+          }
+        }
+      ],
+      "auc_ci": {
+        "lower": 0.9896033885252215,
+        "upper": 1.0
+      }
+    },
+    "simple3dlstm_v2": {
+      "ablations": {
+        "normal": {
+          "ensemble": {
+            "roc_auc": 0.9834424335772045,
+            "pr_auc": 0.9904614019520853,
+            "accuracy": 0.9803921568627451,
+            "balanced_accuracy": 0.9795918367346939,
+            "sensitivity": 0.9591836734693877,
+            "specificity": 1.0,
+            "precision": 1.0,
+            "f1": 0.9791666666666666,
+            "nll": 0.14305104978036742,
+            "brier": 0.026057998686442513,
+            "confusion_matrix": [
+              [
+                53,
+                0
+              ],
+              [
+                2,
+                47
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 0.9838274932614556,
+              "pr_auc": 0.990580847723705,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.15508090591971435,
+              "brier": 0.02909685307725879,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 0.9830573738929533,
+              "pr_auc": 0.9900449088242218,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.14622409877664538,
+              "brier": 0.026601949948754956,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9826723142087023,
+              "pr_auc": 0.9899280317788736,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.13927806873760326,
+              "brier": 0.02685526135800834,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.983185727121037,
+          "sd_seed_auc": 0.000588188383385495
+        },
+        "reversed": {
+          "ensemble": {
+            "roc_auc": 0.9857527916827108,
+            "pr_auc": 0.9912197437114382,
+            "accuracy": 0.9803921568627451,
+            "balanced_accuracy": 0.9795918367346939,
+            "sensitivity": 0.9591836734693877,
+            "specificity": 1.0,
+            "precision": 1.0,
+            "f1": 0.9791666666666666,
+            "nll": 0.14336424757339503,
+            "brier": 0.02632657350851547,
+            "confusion_matrix": [
+              [
+                53,
+                0
+              ],
+              [
+                2,
+                47
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 0.9849826723142088,
+              "pr_auc": 0.9909554730983304,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.15631575994584299,
+              "brier": 0.02974635468166399,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 0.9865229110512129,
+              "pr_auc": 0.9912235363779149,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.1471233361716863,
+              "brier": 0.027230880783468372,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9876780901039661,
+              "pr_auc": 0.9916753436068306,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.13929036470225664,
+              "brier": 0.02716108847191751,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9863945578231293,
+          "sd_seed_auc": 0.0013522851691506188
+        },
+        "shuffled": {
+          "ensemble": {
+            "roc_auc": 0.9907585675779746,
+            "pr_auc": 0.9932904668716803,
+            "accuracy": 0.9803921568627451,
+            "balanced_accuracy": 0.9795918367346939,
+            "sensitivity": 0.9591836734693877,
+            "specificity": 1.0,
+            "precision": 1.0,
+            "f1": 0.9791666666666666,
+            "nll": 0.1420286005522384,
+            "brier": 0.026187446229141712,
+            "confusion_matrix": [
+              [
+                53,
+                0
+              ],
+              [
+                2,
+                47
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 0.9896033885252213,
+              "pr_auc": 0.9925086769401639,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.1554381932047527,
+              "brier": 0.02942040858404722,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 0.9903735078937236,
+              "pr_auc": 0.9928739737438168,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.14414464088400059,
+              "brier": 0.0266683090532129,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.993453985367732,
+              "pr_auc": 0.994559958991446,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.1381845488100402,
+              "brier": 0.02704646675003337,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9911436272622257,
+          "sd_seed_auc": 0.0020375443288907272
+        },
+        "static": {
+          "ensemble": {
+            "roc_auc": 0.9834424335772045,
+            "pr_auc": 0.9904614019520852,
+            "accuracy": 0.9803921568627451,
+            "balanced_accuracy": 0.9795918367346939,
+            "sensitivity": 0.9591836734693877,
+            "specificity": 1.0,
+            "precision": 1.0,
+            "f1": 0.9791666666666666,
+            "nll": 0.14617620568601117,
+            "brier": 0.026913326433043498,
+            "confusion_matrix": [
+              [
+                53,
+                0
+              ],
+              [
+                2,
+                47
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 0.9838274932614555,
+              "pr_auc": 0.990580847723705,
+              "accuracy": 0.9705882352941176,
+              "balanced_accuracy": 0.9693877551020409,
+              "sensitivity": 0.9387755102040817,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.968421052631579,
+              "nll": 0.16103371155101237,
+              "brier": 0.0316410893699932,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  3,
+                  46
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 0.9826723142087023,
+              "pr_auc": 0.9899280317788737,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.14999767648889323,
+              "brier": 0.027764319164316428,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9826723142087024,
+              "pr_auc": 0.9899280317788736,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9795918367346939,
+              "sensitivity": 0.9591836734693877,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 0.9791666666666666,
+              "nll": 0.14251935214731754,
+              "brier": 0.02789799927935859,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  2,
+                  47
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9830573738929532,
+          "sd_seed_auc": 0.0006669429370692431
+        }
+      },
+      "runs": [
+        {
+          "fold": 1,
+          "seed": 42,
+          "epochs": 50,
+          "stage_epochs": {
+            "full": 50
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 44,
+            "best_stage": "full",
+            "best_validation_loss": 0.095334750753974,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 1,
+          "seed": 43,
+          "epochs": 50,
+          "stage_epochs": {
+            "full": 50
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 50,
+            "best_stage": "full",
+            "best_validation_loss": 0.07036443206604544,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 1,
+          "seed": 44,
+          "epochs": 50,
+          "stage_epochs": {
+            "full": 50
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 48,
+            "best_stage": "full",
+            "best_validation_loss": 0.08199672246232272,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 2,
+          "seed": 42,
+          "epochs": 43,
+          "stage_epochs": {
+            "full": 43
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 35,
+            "best_stage": "full",
+            "best_validation_loss": 0.2782225020347011,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 2,
+          "seed": 43,
+          "epochs": 32,
+          "stage_epochs": {
+            "full": 32
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 24,
+            "best_stage": "full",
+            "best_validation_loss": 0.22853919452693397,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 2,
+          "seed": 44,
+          "epochs": 46,
+          "stage_epochs": {
+            "full": 46
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 38,
+            "best_stage": "full",
+            "best_validation_loss": 0.2796169400444228,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 3,
+          "seed": 42,
+          "epochs": 50,
+          "stage_epochs": {
+            "full": 50
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 44,
+            "best_stage": "full",
+            "best_validation_loss": 0.09207103165166698,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 3,
+          "seed": 43,
+          "epochs": 45,
+          "stage_epochs": {
+            "full": 45
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 37,
+            "best_stage": "full",
+            "best_validation_loss": 0.09726580605321483,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 3,
+          "seed": 44,
+          "epochs": 48,
+          "stage_epochs": {
+            "full": 48
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 40,
+            "best_stage": "full",
+            "best_validation_loss": 0.09917719494791415,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 4,
+          "seed": 42,
+          "epochs": 50,
+          "stage_epochs": {
+            "full": 50
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 48,
+            "best_stage": "full",
+            "best_validation_loss": 0.12103120949755522,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 4,
+          "seed": 43,
+          "epochs": 50,
+          "stage_epochs": {
+            "full": 50
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 47,
+            "best_stage": "full",
+            "best_validation_loss": 0.08353096092689202,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 4,
+          "seed": 44,
+          "epochs": 50,
+          "stage_epochs": {
+            "full": 50
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 47,
+            "best_stage": "full",
+            "best_validation_loss": 0.07661479433829914,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 5,
+          "seed": 42,
+          "epochs": 50,
+          "stage_epochs": {
+            "full": 50
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 48,
+            "best_stage": "full",
+            "best_validation_loss": 0.2416438651046097,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 5,
+          "seed": 43,
+          "epochs": 45,
+          "stage_epochs": {
+            "full": 45
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 37,
+            "best_stage": "full",
+            "best_validation_loss": 0.22301307054002684,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 5,
+          "seed": 44,
+          "epochs": 49,
+          "stage_epochs": {
+            "full": 49
+          },
+          "stages_stopped_early": [
+            "full"
+          ],
+          "selection": {
+            "best_epoch": 41,
+            "best_stage": "full",
+            "best_validation_loss": 0.2578170990473569,
+            "metric": "subject_nll"
+          }
+        }
+      ],
+      "auc_ci": {
+        "lower": 0.9457065845206007,
+        "upper": 1.0
+      }
+    },
+    "r3d": {
+      "ablations": {
+        "normal": {
+          "ensemble": {
+            "roc_auc": 1.0,
+            "pr_auc": 1.0,
+            "accuracy": 0.9901960784313726,
+            "balanced_accuracy": 0.9905660377358491,
+            "sensitivity": 1.0,
+            "specificity": 0.9811320754716981,
+            "precision": 0.98,
+            "f1": 0.98989898989899,
+            "nll": 0.015257737065746558,
+            "brier": 0.0054846374736413975,
+            "confusion_matrix": [
+              [
+                52,
+                1
+              ],
+              [
+                0,
+                49
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 1.0,
+              "pr_auc": 1.0,
+              "accuracy": 1.0,
+              "balanced_accuracy": 1.0,
+              "sensitivity": 1.0,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 1.0,
+              "nll": 0.0028458651729870205,
+              "brier": 0.000251624156528427,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  0,
+                  49
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 1.0,
+              "pr_auc": 1.0,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9905660377358491,
+              "sensitivity": 1.0,
+              "specificity": 0.9811320754716981,
+              "precision": 0.98,
+              "f1": 0.98989898989899,
+              "nll": 0.02095018777783187,
+              "brier": 0.007720865936980702,
+              "confusion_matrix": [
+                [
+                  52,
+                  1
+                ],
+                [
+                  0,
+                  49
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9992298806314979,
+              "pr_auc": 0.9991996798719489,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.980361956103196,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 0.9811320754716981,
+              "precision": 0.9795918367346939,
+              "f1": 0.9795918367346939,
+              "nll": 0.06564370215092195,
+              "brier": 0.017014122866739045,
+              "confusion_matrix": [
+                [
+                  52,
+                  1
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9997432935438327,
+          "sd_seed_auc": 0.00044462862471285005
+        },
+        "reversed": {
+          "ensemble": {
+            "roc_auc": 1.0,
+            "pr_auc": 1.0,
+            "accuracy": 0.9901960784313726,
+            "balanced_accuracy": 0.9905660377358491,
+            "sensitivity": 1.0,
+            "specificity": 0.9811320754716981,
+            "precision": 0.98,
+            "f1": 0.98989898989899,
+            "nll": 0.01507400873784429,
+            "brier": 0.0054667508741968705,
+            "confusion_matrix": [
+              [
+                52,
+                1
+              ],
+              [
+                0,
+                49
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 1.0,
+              "pr_auc": 1.0,
+              "accuracy": 1.0,
+              "balanced_accuracy": 1.0,
+              "sensitivity": 1.0,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 1.0,
+              "nll": 0.0030423039268579213,
+              "brier": 0.0003084677243633993,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  0,
+                  49
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 1.0,
+              "pr_auc": 1.0,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9905660377358491,
+              "sensitivity": 1.0,
+              "specificity": 0.9811320754716981,
+              "precision": 0.98,
+              "f1": 0.98989898989899,
+              "nll": 0.020152795966629406,
+              "brier": 0.007388895487093953,
+              "confusion_matrix": [
+                [
+                  52,
+                  1
+                ],
+                [
+                  0,
+                  49
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9996149403157489,
+              "pr_auc": 0.999591836734694,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.980361956103196,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 0.9811320754716981,
+              "precision": 0.9795918367346939,
+              "f1": 0.9795918367346939,
+              "nll": 0.059735664109962214,
+              "brier": 0.014448887781728774,
+              "confusion_matrix": [
+                [
+                  52,
+                  1
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9998716467719163,
+          "sd_seed_auc": 0.00022231431235642503
+        },
+        "shuffled": {
+          "ensemble": {
+            "roc_auc": 1.0,
+            "pr_auc": 1.0,
+            "accuracy": 0.9803921568627451,
+            "balanced_accuracy": 0.9811320754716981,
+            "sensitivity": 1.0,
+            "specificity": 0.9622641509433962,
+            "precision": 0.9607843137254902,
+            "f1": 0.98,
+            "nll": 0.03327183546681469,
+            "brier": 0.01285308395947159,
+            "confusion_matrix": [
+              [
+                51,
+                2
+              ],
+              [
+                0,
+                49
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 1.0,
+              "pr_auc": 1.0,
+              "accuracy": 0.9901960784313726,
+              "balanced_accuracy": 0.9905660377358491,
+              "sensitivity": 1.0,
+              "specificity": 0.9811320754716981,
+              "precision": 0.98,
+              "f1": 0.98989898989899,
+              "nll": 0.016368966583355005,
+              "brier": 0.005816373405300645,
+              "confusion_matrix": [
+                [
+                  52,
+                  1
+                ],
+                [
+                  0,
+                  49
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 1.0,
+              "pr_auc": 1.0,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.9811320754716981,
+              "sensitivity": 1.0,
+              "specificity": 0.9622641509433962,
+              "precision": 0.9607843137254902,
+              "f1": 0.98,
+              "nll": 0.03303840743154868,
+              "brier": 0.011904987311534776,
+              "confusion_matrix": [
+                [
+                  51,
+                  2
+                ],
+                [
+                  0,
+                  49
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9992298806314979,
+              "pr_auc": 0.9991996798719489,
+              "accuracy": 0.9705882352941176,
+              "balanced_accuracy": 0.970927993839045,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 0.9622641509433962,
+              "precision": 0.96,
+              "f1": 0.9696969696969697,
+              "nll": 0.06977852043934449,
+              "brier": 0.018095548116720636,
+              "confusion_matrix": [
+                [
+                  51,
+                  2
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9997432935438327,
+          "sd_seed_auc": 0.00044462862471285005
+        },
+        "static": {
+          "ensemble": {
+            "roc_auc": 1.0,
+            "pr_auc": 1.0,
+            "accuracy": 0.9901960784313726,
+            "balanced_accuracy": 0.9897959183673469,
+            "sensitivity": 0.9795918367346939,
+            "specificity": 1.0,
+            "precision": 1.0,
+            "f1": 0.9896907216494846,
+            "nll": 0.01357389581036467,
+            "brier": 0.004857167811624753,
+            "confusion_matrix": [
+              [
+                53,
+                0
+              ],
+              [
+                1,
+                48
+              ]
+            ],
+            "subjects": 102,
+            "positive_subjects": 49,
+            "negative_subjects": 53,
+            "threshold": 0.5
+          },
+          "per_seed": {
+            "42": {
+              "roc_auc": 1.0,
+              "pr_auc": 1.0,
+              "accuracy": 1.0,
+              "balanced_accuracy": 1.0,
+              "sensitivity": 1.0,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 1.0,
+              "nll": 0.004372720099029833,
+              "brier": 0.001033556298648894,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  0,
+                  49
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "43": {
+              "roc_auc": 1.0,
+              "pr_auc": 1.0,
+              "accuracy": 1.0,
+              "balanced_accuracy": 1.0,
+              "sensitivity": 1.0,
+              "specificity": 1.0,
+              "precision": 1.0,
+              "f1": 1.0,
+              "nll": 0.009229282530475618,
+              "brier": 0.002525885806209631,
+              "confusion_matrix": [
+                [
+                  53,
+                  0
+                ],
+                [
+                  0,
+                  49
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            },
+            "44": {
+              "roc_auc": 0.9996149403157489,
+              "pr_auc": 0.999591836734694,
+              "accuracy": 0.9803921568627451,
+              "balanced_accuracy": 0.980361956103196,
+              "sensitivity": 0.9795918367346939,
+              "specificity": 0.9811320754716981,
+              "precision": 0.9795918367346939,
+              "f1": 0.9795918367346939,
+              "nll": 0.07759755149220418,
+              "brier": 0.018855500651524974,
+              "confusion_matrix": [
+                [
+                  52,
+                  1
+                ],
+                [
+                  1,
+                  48
+                ]
+              ],
+              "subjects": 102,
+              "positive_subjects": 49,
+              "negative_subjects": 53,
+              "threshold": 0.5
+            }
+          },
+          "mean_seed_auc": 0.9998716467719163,
+          "sd_seed_auc": 0.00022231431235642503
+        }
+      },
+      "runs": [
+        {
+          "fold": 1,
+          "seed": 42,
+          "epochs": 39,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 16,
+            "full": 8
+          },
+          "stages_stopped_early": [
+            "layer4"
+          ],
+          "selection": {
+            "best_epoch": 39,
+            "best_stage": "full",
+            "best_validation_loss": 0.0008798000294826445,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 1,
+          "seed": 43,
+          "epochs": 34,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 11,
+            "full": 8
+          },
+          "stages_stopped_early": [
+            "layer4"
+          ],
+          "selection": {
+            "best_epoch": 18,
+            "best_stage": "layer4",
+            "best_validation_loss": 0.0029741769046885596,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 1,
+          "seed": 44,
+          "epochs": 43,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 20,
+            "full": 8
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 39,
+            "best_stage": "full",
+            "best_validation_loss": 0.0010124782858249434,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 2,
+          "seed": 42,
+          "epochs": 33,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 10,
+            "full": 8
+          },
+          "stages_stopped_early": [
+            "layer4"
+          ],
+          "selection": {
+            "best_epoch": 17,
+            "best_stage": "layer4",
+            "best_validation_loss": 0.0022975667333466933,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 2,
+          "seed": 43,
+          "epochs": 34,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 11,
+            "full": 8
+          },
+          "stages_stopped_early": [
+            "layer4"
+          ],
+          "selection": {
+            "best_epoch": 31,
+            "best_stage": "full",
+            "best_validation_loss": 0.0955885319815804,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 2,
+          "seed": 44,
+          "epochs": 35,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 12,
+            "full": 8
+          },
+          "stages_stopped_early": [
+            "layer4"
+          ],
+          "selection": {
+            "best_epoch": 29,
+            "best_stage": "full",
+            "best_validation_loss": 0.0027337321182856152,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 3,
+          "seed": 42,
+          "epochs": 43,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 20,
+            "full": 8
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 37,
+            "best_stage": "full",
+            "best_validation_loss": 1.546842097626799e-06,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 3,
+          "seed": 43,
+          "epochs": 43,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 20,
+            "full": 8
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 36,
+            "best_stage": "full",
+            "best_validation_loss": 4.372306740865717e-07,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 3,
+          "seed": 44,
+          "epochs": 35,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 12,
+            "full": 8
+          },
+          "stages_stopped_early": [
+            "layer4"
+          ],
+          "selection": {
+            "best_epoch": 30,
+            "best_stage": "full",
+            "best_validation_loss": 7.306763172124804e-06,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 4,
+          "seed": 42,
+          "epochs": 42,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 19,
+            "full": 8
+          },
+          "stages_stopped_early": [
+            "layer4"
+          ],
+          "selection": {
+            "best_epoch": 39,
+            "best_stage": "full",
+            "best_validation_loss": 3.4016436578289916e-06,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 4,
+          "seed": 43,
+          "epochs": 43,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 20,
+            "full": 8
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 39,
+            "best_stage": "full",
+            "best_validation_loss": 1.2380143207944524e-06,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 4,
+          "seed": 44,
+          "epochs": 43,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 20,
+            "full": 8
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 37,
+            "best_stage": "full",
+            "best_validation_loss": 1.198193376929595e-07,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 5,
+          "seed": 42,
+          "epochs": 38,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 15,
+            "full": 8
+          },
+          "stages_stopped_early": [
+            "layer4"
+          ],
+          "selection": {
+            "best_epoch": 22,
+            "best_stage": "layer4",
+            "best_validation_loss": 0.003572263785053032,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 5,
+          "seed": 43,
+          "epochs": 33,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 10,
+            "full": 8
+          },
+          "stages_stopped_early": [
+            "layer4"
+          ],
+          "selection": {
+            "best_epoch": 28,
+            "best_stage": "full",
+            "best_validation_loss": 3.505460918368995e-05,
+            "metric": "subject_nll"
+          }
+        },
+        {
+          "fold": 5,
+          "seed": 44,
+          "epochs": 43,
+          "stage_epochs": {
+            "head": 15,
+            "layer4": 20,
+            "full": 8
+          },
+          "stages_stopped_early": [],
+          "selection": {
+            "best_epoch": 36,
+            "best_stage": "full",
+            "best_validation_loss": 0.002380668239010739,
+            "metric": "subject_nll"
+          }
+        }
+      ],
+      "auc_ci": {
+        "lower": 0.9999999999999999,
+        "upper": 1.0
+      }
+    }
+  },
+  "baselines": {
+    "duration_resolution_extension_capture_time": {
+      "metrics": {
+        "roc_auc": 0.9033500192529842,
+        "pr_auc": 0.9017812834569094,
+        "accuracy": 0.7941176470588235,
+        "balanced_accuracy": 0.7957258375048133,
+        "sensitivity": 0.8367346938775511,
+        "specificity": 0.7547169811320755,
+        "precision": 0.7592592592592593,
+        "f1": 0.7961165048543689,
+        "nll": 0.37899901086206045,
+        "brier": 0.1276635609819435,
+        "confusion_matrix": [
+          [
+            40,
+            13
+          ],
+          [
+            8,
+            41
+          ]
+        ],
+        "subjects": 102,
+        "positive_subjects": 49,
+        "negative_subjects": 53,
+        "threshold": 0.5
+      },
+      "bootstrap_95_ci": {
+        "roc_auc": {
+          "lower": 0.8417308432807086,
+          "upper": 0.9518675394686176
+        },
+        "pr_auc": {
+          "lower": 0.8445565338135059,
+          "upper": 0.9492586540618996
+        },
+        "accuracy": {
+          "lower": 0.7156862745098039,
+          "upper": 0.8725490196078431
+        },
+        "balanced_accuracy": {
+          "lower": 0.7148633038120908,
+          "upper": 0.871967654986523
+        },
+        "sensitivity": {
+          "lower": 0.7142857142857143,
+          "upper": 0.9387755102040817
+        },
+        "specificity": {
+          "lower": 0.6415094339622641,
+          "upper": 0.8679245283018868
+        },
+        "precision": {
+          "lower": 0.6774193548387096,
+          "upper": 0.8541666666666666
+        },
+        "f1": {
+          "lower": 0.7142857142857143,
+          "upper": 0.8679245283018868
+        },
+        "nll": {
+          "lower": 0.29612423244844716,
+          "upper": 0.46563241566284835
+        },
+        "brier": {
+          "lower": 0.0936948536169627,
+          "upper": 0.1639835444854861
+        }
+      }
+    },
+    "color_brightness_padding": {
+      "metrics": {
+        "roc_auc": 0.8917982287254524,
+        "pr_auc": 0.8360270349605272,
+        "accuracy": 0.8137254901960784,
+        "balanced_accuracy": 0.813823642664613,
+        "sensitivity": 0.8163265306122449,
+        "specificity": 0.8113207547169812,
+        "precision": 0.8,
+        "f1": 0.8080808080808081,
+        "nll": 0.4549131627706551,
+        "brier": 0.14139799081369486,
+        "confusion_matrix": [
+          [
+            43,
+            10
+          ],
+          [
+            9,
+            40
+          ]
+        ],
+        "subjects": 102,
+        "positive_subjects": 49,
+        "negative_subjects": 53,
+        "threshold": 0.5
+      },
+      "bootstrap_95_ci": {
+        "roc_auc": {
+          "lower": 0.8201578744705429,
+          "upper": 0.9511070465922218
+        },
+        "pr_auc": {
+          "lower": 0.7378254704494347,
+          "upper": 0.9324988346280386
+        },
+        "accuracy": {
+          "lower": 0.7352941176470589,
+          "upper": 0.8823529411764706
+        },
+        "balanced_accuracy": {
+          "lower": 0.7345013477088949,
+          "upper": 0.882941855987678
+        },
+        "sensitivity": {
+          "lower": 0.7142857142857143,
+          "upper": 0.9183673469387755
+        },
+        "specificity": {
+          "lower": 0.6981132075471698,
+          "upper": 0.9056603773584906
+        },
+        "precision": {
+          "lower": 0.7083333333333334,
+          "upper": 0.8958333333333334
+        },
+        "f1": {
+          "lower": 0.723404255319149,
+          "upper": 0.88
+        },
+        "nll": {
+          "lower": 0.36401125072509644,
+          "upper": 0.5585773079859275
+        },
+        "brier": {
+          "lower": 0.10933950750245928,
+          "upper": 0.1772063653935481
+        }
+      }
+    },
+    "frame_difference_motion": {
+      "metrics": {
+        "roc_auc": 0.8586830958798615,
+        "pr_auc": 0.8811997892226373,
+        "accuracy": 0.8333333333333334,
+        "balanced_accuracy": 0.8311513284559107,
+        "sensitivity": 0.7755102040816326,
+        "specificity": 0.8867924528301887,
+        "precision": 0.8636363636363636,
+        "f1": 0.8172043010752689,
+        "nll": 0.44999394499696693,
+        "brier": 0.14207062879021135,
+        "confusion_matrix": [
+          [
+            47,
+            6
+          ],
+          [
+            11,
+            38
+          ]
+        ],
+        "subjects": 102,
+        "positive_subjects": 49,
+        "negative_subjects": 53,
+        "threshold": 0.5
+      },
+      "bootstrap_95_ci": {
+        "roc_auc": {
+          "lower": 0.766644204851752,
+          "upper": 0.9318540623796688
+        },
+        "pr_auc": {
+          "lower": 0.805942260204975,
+          "upper": 0.9450992682768113
+        },
+        "accuracy": {
+          "lower": 0.7549019607843137,
+          "upper": 0.9019607843137255
+        },
+        "balanced_accuracy": {
+          "lower": 0.7518290335001925,
+          "upper": 0.9002695417789757
+        },
+        "sensitivity": {
+          "lower": 0.6530612244897959,
+          "upper": 0.8775510204081632
+        },
+        "specificity": {
+          "lower": 0.7924528301886793,
+          "upper": 0.9622641509433962
+        },
+        "precision": {
+          "lower": 0.7749646226415094,
+          "upper": 0.9523809523809523
+        },
+        "f1": {
+          "lower": 0.7209302325581395,
+          "upper": 0.8936170212765957
+        },
+        "nll": {
+          "lower": 0.3469154870362346,
+          "upper": 0.5679751740102288
+        },
+        "brier": {
+          "lower": 0.10333425557906246,
+          "upper": 0.1867189949818408
+        }
+      }
+    },
+    "tiny_thumbnails": {
+      "metrics": {
+        "roc_auc": 0.9580284944166346,
+        "pr_auc": 0.9632782907904105,
+        "accuracy": 0.9509803921568627,
+        "balanced_accuracy": 0.951289949942241,
+        "sensitivity": 0.9591836734693877,
+        "specificity": 0.9433962264150944,
+        "precision": 0.94,
+        "f1": 0.9494949494949495,
+        "nll": 0.3898090043872154,
+        "brier": 0.052163819197621544,
+        "confusion_matrix": [
+          [
+            50,
+            3
+          ],
+          [
+            2,
+            47
+          ]
+        ],
+        "subjects": 102,
+        "positive_subjects": 49,
+        "negative_subjects": 53,
+        "threshold": 0.5
+      },
+      "bootstrap_95_ci": {
+        "roc_auc": {
+          "lower": 0.9052656911821334,
+          "upper": 0.9946091644204852
+        },
+        "pr_auc": {
+          "lower": 0.9239771495819153,
+          "upper": 0.9951684833636131
+        },
+        "accuracy": {
+          "lower": 0.9117647058823529,
+          "upper": 0.9901960784313726
+        },
+        "balanced_accuracy": {
+          "lower": 0.9097035040431267,
+          "upper": 0.9905660377358491
+        },
+        "sensitivity": {
+          "lower": 0.8979591836734694,
+          "upper": 1.0
+        },
+        "specificity": {
+          "lower": 0.8679245283018868,
+          "upper": 1.0
+        },
+        "precision": {
+          "lower": 0.875,
+          "upper": 1.0
+        },
+        "f1": {
+          "lower": 0.9038461538461539,
+          "upper": 0.98989898989899
+        },
+        "nll": {
+          "lower": 0.07944806929278406,
+          "upper": 0.8667321653104889
+        },
+        "brier": {
+          "lower": 0.015309439383084347,
+          "upper": 0.09471220798628739
+        }
+      }
+    }
+  },
+  "verification": "Recomputed every fold/seed/ablation from held-out subject predictions; checked labels, coverage, isolation, and configuration hash."
+}

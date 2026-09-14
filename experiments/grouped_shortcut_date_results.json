@@ -1,0 +1,226 @@
+{
+  "audit_scope": "Legacy caches treated as development/audit data",
+  "grouping": "date",
+  "videos": 107,
+  "capture_groups": 29,
+  "single_class_capture_groups": 29,
+  "warning": "Capture groups are label-confounded; grouped results diagnose recording shortcuts but cannot replace subject-independent evaluation.",
+  "results": {
+    "duration_resolution_extension_capture_time": {
+      "roc_auc": 0.7047519217330538,
+      "pr_auc": 0.7037091258515078,
+      "accuracy": 0.6822429906542056,
+      "balanced_accuracy": 0.6827393431167016,
+      "f1": 0.6964285714285714,
+      "folds": [
+        {
+          "fold": 1,
+          "train_videos": 99,
+          "test_videos": 8,
+          "train_groups": 24,
+          "test_groups": 5,
+          "test_positive": 7,
+          "test_negative": 1
+        },
+        {
+          "fold": 2,
+          "train_videos": 93,
+          "test_videos": 14,
+          "train_groups": 24,
+          "test_groups": 5,
+          "test_positive": 14,
+          "test_negative": 0
+        },
+        {
+          "fold": 3,
+          "train_videos": 58,
+          "test_videos": 49,
+          "train_groups": 23,
+          "test_groups": 6,
+          "test_positive": 10,
+          "test_negative": 39
+        },
+        {
+          "fold": 4,
+          "train_videos": 87,
+          "test_videos": 20,
+          "train_groups": 22,
+          "test_groups": 7,
+          "test_positive": 12,
+          "test_negative": 8
+        },
+        {
+          "fold": 5,
+          "train_videos": 91,
+          "test_videos": 16,
+          "train_groups": 23,
+          "test_groups": 6,
+          "test_positive": 10,
+          "test_negative": 6
+        }
+      ]
+    },
+    "color_brightness_padding": {
+      "roc_auc": 0.6907756813417191,
+      "pr_auc": 0.5765116706899678,
+      "accuracy": 0.6915887850467289,
+      "balanced_accuracy": 0.6923480083857443,
+      "f1": 0.7130434782608696,
+      "folds": [
+        {
+          "fold": 1,
+          "train_videos": 99,
+          "test_videos": 8,
+          "train_groups": 24,
+          "test_groups": 5,
+          "test_positive": 7,
+          "test_negative": 1
+        },
+        {
+          "fold": 2,
+          "train_videos": 93,
+          "test_videos": 14,
+          "train_groups": 24,
+          "test_groups": 5,
+          "test_positive": 14,
+          "test_negative": 0
+        },
+        {
+          "fold": 3,
+          "train_videos": 58,
+          "test_videos": 49,
+          "train_groups": 23,
+          "test_groups": 6,
+          "test_positive": 10,
+          "test_negative": 39
+        },
+        {
+          "fold": 4,
+          "train_videos": 87,
+          "test_videos": 20,
+          "train_groups": 22,
+          "test_groups": 7,
+          "test_positive": 12,
+          "test_negative": 8
+        },
+        {
+          "fold": 5,
+          "train_videos": 91,
+          "test_videos": 16,
+          "train_groups": 23,
+          "test_groups": 6,
+          "test_positive": 10,
+          "test_negative": 6
+        }
+      ]
+    },
+    "frame_difference_motion": {
+      "roc_auc": 0.9566736547868624,
+      "pr_auc": 0.9622653043938043,
+      "accuracy": 0.8878504672897196,
+      "balanced_accuracy": 0.8873165618448637,
+      "f1": 0.88,
+      "folds": [
+        {
+          "fold": 1,
+          "train_videos": 99,
+          "test_videos": 8,
+          "train_groups": 24,
+          "test_groups": 5,
+          "test_positive": 7,
+          "test_negative": 1
+        },
+        {
+          "fold": 2,
+          "train_videos": 93,
+          "test_videos": 14,
+          "train_groups": 24,
+          "test_groups": 5,
+          "test_positive": 14,
+          "test_negative": 0
+        },
+        {
+          "fold": 3,
+          "train_videos": 58,
+          "test_videos": 49,
+          "train_groups": 23,
+          "test_groups": 6,
+          "test_positive": 10,
+          "test_negative": 39
+        },
+        {
+          "fold": 4,
+          "train_videos": 87,
+          "test_videos": 20,
+          "train_groups": 22,
+          "test_groups": 7,
+          "test_positive": 12,
+          "test_negative": 8
+        },
+        {
+          "fold": 5,
+          "train_videos": 91,
+          "test_videos": 16,
+          "train_groups": 23,
+          "test_groups": 6,
+          "test_positive": 10,
+          "test_negative": 6
+        }
+      ]
+    },
+    "tiny_thumbnails": {
+      "roc_auc": 0.73340321453529,
+      "pr_auc": 0.6349148602009164,
+      "accuracy": 0.7663551401869159,
+      "balanced_accuracy": 0.7672955974842768,
+      "f1": 0.7863247863247863,
+      "folds": [
+        {
+          "fold": 1,
+          "train_videos": 99,
+          "test_videos": 8,
+          "train_groups": 24,
+          "test_groups": 5,
+          "test_positive": 7,
+          "test_negative": 1
+        },
+        {
+          "fold": 2,
+          "train_videos": 93,
+          "test_videos": 14,
+          "train_groups": 24,
+          "test_groups": 5,
+          "test_positive": 14,
+          "test_negative": 0
+        },
+        {
+          "fold": 3,
+          "train_videos": 58,
+          "test_videos": 49,
+          "train_groups": 23,
+          "test_groups": 6,
+          "test_positive": 10,
+          "test_negative": 39
+        },
+        {
+          "fold": 4,
+          "train_videos": 87,
+          "test_videos": 20,
+          "train_groups": 22,
+          "test_groups": 7,
+          "test_positive": 12,
+          "test_negative": 8
+        },
+        {
+          "fold": 5,
+          "train_videos": 91,
+          "test_videos": 16,
+          "train_groups": 23,
+          "test_groups": 6,
+          "test_positive": 10,
+          "test_negative": 6
+        }
+      ]
+    }
+  }
+}

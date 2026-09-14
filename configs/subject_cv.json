@@ -1,0 +1,49 @@
+{
+  "protocol": "subject_cv",
+  "protocol_version": 1,
+  "clip_cache_version": 2,
+  "split_seed": 42,
+  "training_seeds": [42, 43, 44],
+  "max_outer_folds": 5,
+  "samples_per_subject": 4,
+  "batch_size": 8,
+  "num_workers": 0,
+  "bootstrap_samples": 2000,
+  "threshold": 0.5,
+  "temperature_scaling": false,
+  "temporal_ablations": ["normal", "reversed", "shuffled", "static"],
+  "models": {
+    "simple2dcnn": {
+      "max_epochs": 50,
+      "patience": 8,
+      "learning_rate": 0.0001,
+      "weight_decay": 0.0001,
+      "dropout": 0.3
+    },
+    "simple3dlstm_v2": {
+      "max_epochs": 50,
+      "patience": 8,
+      "learning_rate": 0.0001,
+      "weight_decay": 0.0001,
+      "dropout": 0.3,
+      "gradient_clip": 1.0
+    },
+    "simple3dlstm_legacy": {
+      "max_epochs": 50,
+      "patience": 8,
+      "learning_rate": 0.0001,
+      "weight_decay": 0.0001,
+      "dropout": 0.3,
+      "gradient_clip": 1.0
+    },
+    "r3d": {
+      "patience": 8,
+      "weight_decay": 0.0001,
+      "stages": [
+        {"name": "head", "epochs": 15, "learning_rate": 0.001},
+        {"name": "layer4", "epochs": 20, "learning_rate": 0.0001},
+        {"name": "full", "epochs": 8, "learning_rate": 0.00001}
+      ]
+    }
+  }
+}

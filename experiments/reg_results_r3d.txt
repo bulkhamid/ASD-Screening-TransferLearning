@@ -93,7 +93,7 @@ acc    : 0.909
 prec   : 0.846
 rec    : 1.000
 f1     : 0.917
-PS C:\Users\zhams\OneDrive\Desktop\ASD-Screening-TransferLearning> 
+PS <PROJECT_ROOT>>
 
 | # | **model** | `--finetune`<br>(unfreeze layer 4) | `--drop` | `--wd` | `--temp` | epochs / patience |
 ---------------------------------------------------------------------------------------------------------
@@ -220,7 +220,7 @@ f1     : 1.000
 ---------------------------------------------------------------------------------------------------------
 | 5 | r3d       | yes                                |  —       | 5 e‑5  | **on**   | 25 / 10           |
 python train_regularized.py --model r3d --finetune --wd 5e-5  --epochs 50 --temp --patience 10
-C:\Users\zhams\OneDrive\Desktop\ASD-Screening-TransferLearning\asd\Lib\site-packages\torchvision\models\_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=R3D_18_Weights.KINETICS400_V1`. You can also use `weights=R3D_18_Weights.DEFAULT` to get the most up-to-date weights.
+<PROJECT_VENV>\site-packages\torchvision\models\_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=R3D_18_Weights.KINETICS400_V1`. You can also use `weights=R3D_18_Weights.DEFAULT` to get the most up-to-date weights.
   warnings.warn(msg)
 
 ▶  Stage **head**  (epochs=25, wd=5e-05)

@@ -497,7 +497,7 @@ TEST  AUC=1.000  F1=1.000  loss=0.0000
 TEST  AUC=1.000  F1=1.000  loss=0.0000
 
 ==== Fold 5 ====
-C:\Users\zhams\OneDrive\Desktop\ASD-Screening-TransferLearning\asd\Lib\site-packages\torchvision\models\_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=R3D_18_Weights.KINETICS400_V1`. You can also use `weights=R3D_18_Weights.DEFAULT` to get the most up-to-date weights.
+<PROJECT_VENV>\site-packages\torchvision\models\_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=R3D_18_Weights.KINETICS400_V1`. You can also use `weights=R3D_18_Weights.DEFAULT` to get the most up-to-date weights.
   warnings.warn(msg)
 [Fold 5][head] ep 001  train=0.6692  val=0.7224  valAUC=0.433  time=30.0s
 [Fold 5][head] ep 002  train=0.6370  val=0.6927  valAUC=0.500  time=30.5s

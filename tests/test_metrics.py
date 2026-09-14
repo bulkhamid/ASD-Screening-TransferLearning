@@ -26,6 +26,17 @@ class ComputeMetricsTests(unittest.TestCase):
 
         self.assertEqual(metrics["auc"], 0.5)
 
+    def test_auc_can_rank_raw_logits_when_probabilities_saturate(self):
+        y_true = np.array([0, 1])
+        saturated_probabilities = np.array([1.0, 1.0])
+        logits = np.array([1000.0, 1001.0])
+
+        metrics = compute_metrics(
+            y_true, saturated_probabilities, ranking_scores=logits
+        )
+
+        self.assertEqual(metrics["auc"], 1.0)
+
 
 if __name__ == "__main__":
     unittest.main()

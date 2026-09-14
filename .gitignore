@@ -23,6 +23,7 @@ tmp_write_probe.txt
 wandb/
 
 .asd/
+asd/
 
 checkpoints/
 
@@ -36,6 +37,19 @@ src/models/results/
 
 data/*.npz
 data_source_aware/*.npz
+data_grouped/clips/
+data_grouped/masks/
+data_grouped/excluded_private.json
+private/
+runs/
+**/fold_assignments*.csv
+**/predictions*.csv
+**/cache_manifest.csv
+data*/split_manifest.csv
+data*/skipped_manifest.csv
 gradcam_outputs/
+# Generated reports may embed private participant frames.
+reports/*.docx
+reports/assets/gradcam*.jpg
 cloudflared*.log
 tools/bin/

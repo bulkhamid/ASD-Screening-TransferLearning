@@ -1,0 +1,2 @@
+video_id,relative_path,label,subject_id,session_id,capture_datetime,site_id,device_id,include,notes
+<sha256>,positive/example.webm,1,S001,S001_SESSION01,2024-01-01T12:00:00,SITE01,CAMERA01,1,pseudonymous identifiers only

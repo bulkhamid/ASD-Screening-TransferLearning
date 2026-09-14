@@ -80,7 +80,16 @@ def main():
     # R3D fine‑tune stage2 flag (optional)
     ap.add_argument("--finetune",action="store_true",
                     help="if set, unfreezes layer4 after head warm‑up")
+    ap.add_argument("--legacy_holdout_ack", action="store_true")
+    ap.add_argument("--experimental_calibration", action="store_true")
     cfg = ap.parse_args()
+    if not cfg.legacy_holdout_ack:
+        ap.error(
+            "This is a legacy video-level holdout script. Pass --legacy_holdout_ack "
+            "only for development diagnostics."
+        )
+    if cfg.temp and not cfg.experimental_calibration:
+        ap.error("--temp requires --experimental_calibration")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

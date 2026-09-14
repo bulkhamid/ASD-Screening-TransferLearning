@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "clips_per_video": 5,
+  "clip_len": 16,
+  "sample_fps": 15.0,
+  "target_size": [
+    112,
+    112
+  ],
+  "pad_value": 128,
+  "config_sha256": "74fa28f267debf7af2dd952354022903896f1ca70782771137cad4cd5ee4d028"
+}

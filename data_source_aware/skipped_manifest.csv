@@ -1,2 +1,0 @@
-path,label,raw_hash,decoded_hash,total_frames,decoded_frames,failed_reads,status,is_all_zero
-C:\Users\zhams\HWs\Autsim\dataset\positive\20240129050823.webm,1,e50a9ce93c1d26d7c61ada8e13a92ca947ff2d43,,-9223372036854775808,0,0,excluded_unreadable,

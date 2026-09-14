@@ -1,0 +1,15 @@
+{
+  "included_metadata_rows": 107,
+  "cached_videos": 103,
+  "excluded_videos": 4,
+  "excluded_reasons": [
+    "could not decode frame near index 1633",
+    "could not decode frame near index 5517",
+    "decoded with 10/80 failed or substituted frame reads",
+    "decoded with 11/80 failed or substituted frame reads"
+  ],
+  "label_counts": {
+    "0": 53,
+    "1": 50
+  }
+}

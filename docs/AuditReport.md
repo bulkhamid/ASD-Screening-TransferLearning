@@ -1,281 +1,231 @@
-# ASD Screening Project Audit Report
+# ASD Video Project Audit Report
 
-Date: 2026-06-02
-Baseline: local trusted branch `Zhamshidbek-updates` at `8493dd3`
+Historical audit snapshot. The subsequent owner-confirmed mapping and footage
+review supersede the missing-metadata status below; see
+[Reviewed Subject Benchmark](ReviewedSubjectBenchmark.md).
 
-## Summary
+## Executive Finding
 
-This pass fixed code paths that could produce misleading results or fragile
-runtime behavior, rebuilt the cache with aspect-ratio-preserving gray
-letterbox preprocessing, reran hold-out training, and added Grad-CAM/layer
-inspection tooling. No CV experiments were run.
+The repository is technically runnable, but its previously reported
+near-perfect performance is not a trustworthy estimate of generalization to new
+subjects. The strongest current conclusion is that recording and collection
+shortcuts are highly predictive in the available videos.
 
-The local branch was checked against GitHub and found to be behind
-`origin/Zhamshidbek-updates`, but the newer remote code was not merged because
-it was not yet trusted/reviewed.
+No new deep benchmark was run in this audit. That is intentional: the private
+subject/session template is incomplete, and training before identity validation
+would repeat the central scientific error.
 
-## Fixes Implemented
+## Evidence Against the Legacy Claim
 
-- Disabled `--cached --cv` in `train.py` because the current cache contains one
-  fixed `train.npz` / `val.npz` / `test.npz` split, not fold-specific cached
-  splits.
-- Changed `--cv` to opt-in. Cached training now defaults to hold-out behavior.
-- Applied the validation-selected threshold to test accuracy, precision,
-  recall, and F1. AUC remains threshold-free.
-- Made Weights & Biases logging opt-in with `--wandb` and lazy-loaded to avoid
-  import-time console/runtime side effects.
-- Replaced deprecated `r3d_18(weights=True)` usage with the explicit
-  `R3D_18_Weights.KINETICS400_V1` enum.
-- Rebuilt `data/save_numpy_dataset.py` as a CLI tool with full-file hashing,
-  decoded-array hashing, unreadable-video exclusion by default, all-zero
-  exclusion by default, and split/skipped manifests.
-- Fixed double normalization in `experiments/debug_shuffle_labels.py`.
-- Added missing dependencies to `requirements.txt`: `scikit-learn`, `wandb`.
-- Updated `README.md` so cached historical logs are described as repeated
-  hold-out runs, not validated 5-fold CV.
+### Split leakage risk
 
-## Data Integrity Check
+- The rebuilt legacy cache contains 107 readable videos from 108 raw files.
+- All 11 validation videos and 21 of 22 test videos share a capture date with at
+  least one training video.
+- Capture date is not proven to be a subject, but overlap makes session,
+  background, device, and recording-condition leakage plausible.
+- The old raw `--cv` code used unique filename stems as groups. Because each
+  filename was effectively unique, this did not create subject-independent CV.
+- The old cached `--cv` path loaded the same fixed train/validation/test NPZ
+  files repeatedly. Those logs were repeated holdout runs, not five-fold CV.
 
-Initial cached split check before rebuild:
+### Source confounding
 
-| Split | Shape | Pos | Neg | Within-split duplicates | All-zero videos |
-| --- | --- | ---: | ---: | ---: | ---: |
-| train | `(73, 60, 112, 112, 3)` | 37 | 36 | 0 | 1 |
-| val | `(11, 60, 112, 112, 3)` | 5 | 6 | 0 | 0 |
-| test | `(22, 60, 112, 112, 3)` | 11 | 11 | 0 | 0 |
+Every one of the 29 observed capture-date groups contains only one class. Month
+and extension are also class-confounded. A source-aware random holdout can make
+source distributions look more similar, but it cannot remove this structural
+confounding.
 
-Cross-split decoded-array duplicate counts:
+### Shortcut baselines
 
-| Pair | Duplicates |
-| --- | ---: |
-| train-val | 0 |
-| train-test | 0 |
-| val-test | 0 |
+The new audit held complete capture dates out with grouped OOF prediction across
+all 107 legacy videos:
 
-Finding: the old cache had no exact decoded-array duplicates across splits, but
-it contained one all-zero training video.
+| Feature family | ROC AUC | PR AUC | Balanced accuracy | F1 |
+|---|---:|---:|---:|---:|
+| Duration, resolution, extension, capture time | 0.705 | 0.704 | 0.683 | 0.696 |
+| Color, brightness, padding | 0.691 | 0.577 | 0.692 | 0.713 |
+| Frame-difference motion | **0.957** | **0.962** | **0.887** | **0.880** |
+| Tiny thumbnails | 0.733 | 0.635 | 0.767 | 0.786 |
 
-## Clean Cache Rebuild
+Some grouped folds contain one test class because capture-date groups are pure
+and unevenly sized. The table therefore uses aggregate OOF metrics, not a mean
+of per-fold AUCs. It is a shortcut diagnostic, not a valid subject result.
 
-The cache was rebuilt from `C:\Users\zhams\HWs\Autsim\dataset` with aspect-ratio-preserving letterbox resize:
+The motion result is especially important: a four-feature logistic classifier
+nearly reproduces the deep-model ranking without learning social behavior. A
+deep score of 1.0 on the old holdout is therefore fully compatible with shortcut
+learning.
 
-```powershell
-asd\Scripts\python.exe data\save_numpy_dataset.py --root C:\Users\zhams\HWs\Autsim\dataset --output_dir data --max_frames 60 --target_size 112 112 --seed 42 --unreadable_policy exclude --pad_value 128
-```
+### Temporal construction problem
 
-Raw folder counts were 54 positive videos and 54 negative videos. One positive
-video was excluded as unreadable:
+Legacy preprocessing randomly selected 60 frames across videos lasting roughly
+three minutes, sorted the selected indices, and passed them to Conv3D/R3D as
+adjacent frames. The resulting sequence does not represent continuous motion.
+Frame-wise random crops, colors, rotations, flips, and erasing also introduced
+synthetic motion because each frame received a different transform.
 
-`C:\Users\zhams\HWs\Autsim\dataset\positive\20240129050823.webm`
+### R3D transfer mismatch
 
-Rebuilt cached split check:
+Legacy R3D used ImageNet normalization. The torchvision Kinetics-400 R3D-18
+weights expect mean `(0.43216, 0.394666, 0.37645)` and standard deviation
+`(0.22803, 0.22145, 0.216989)`. In addition, frozen R3D BatchNorm buffers were
+allowed to update during head-only training.
 
-| Split | Shape | Pos | Neg | Within-split duplicates | All-zero videos |
-| --- | --- | ---: | ---: | ---: | ---: |
-| train | `(74, 60, 112, 112, 3)` | 37 | 37 | 0 | 0 |
-| val | `(11, 60, 112, 112, 3)` | 5 | 6 | 0 | 0 |
-| test | `(22, 60, 112, 112, 3)` | 11 | 11 | 0 | 0 |
+### Calibration failure
 
-Rebuilt cross-split decoded-array duplicate counts:
+The legacy Simple3DLSTM produced temperature approximately `0.00184`. On its old
+test set, raw NLL was approximately `0.378`; calibrated NLL worsened to
+approximately `5.51`. Probability saturation also changed numerically computed
+AUC from `1.00` to approximately `0.955`, even though positive scaling should
+not change ranking. This exposed two problems:
 
-| Pair | Duplicates |
-| --- | ---: |
-| train-val | 0 |
-| train-test | 0 |
-| val-test | 0 |
+1. AUC was computed from saturated probabilities instead of raw logits.
+2. Calibration used too little, repeatedly examined validation data and reached
+   a pathological boundary-like solution.
 
-The rebuilt cache now has 107 usable videos and no all-zero decoded arrays.
-Because the cache changed, model checkpoints and plots produced before this
-rebuild correspond to the old cache, not the rebuilt cache.
+Primary experiments now disable calibration and use logit AUC. The repaired
+experimental scaler is bounded, optimizes `BCEWithLogitsLoss`, records pre/post
+NLL, and refuses to retain a solution that worsens calibration NLL. It still
+requires independent calibration subjects.
 
-## Corrected Label-Shuffle Checks
+### Invalid old permutation control
 
-The corrected hold-out label-shuffle sanity checks were run for 10 epochs.
+The old script independently shuffled training, validation, and test labels.
+That destroys the ground truth used to evaluate the null and makes a near-chance
+test result uninformative. It also hardcoded the default cache.
 
-| Model | Train AUC | Val AUC | Test AUC | Test loss | Test accuracy |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Simple3DLSTM | 0.740 | 0.567 | 0.612 | 0.685 | 0.591 |
-| R3D | 0.835 | 0.667 | 0.521 | 0.691 | 0.545 |
+The legacy diagnostic now permutes training labels only and leaves validation
+and test labels fixed. The subject benchmark permutes labels at the training
+subject level only. Planned controls are five complete Simple2DCNN permutations
+and one complete grouped permutation for each larger model.
 
-Both test AUCs remain below the script's leakage warning threshold of `0.65`.
-The elevated train AUC on shuffled labels shows the models can fit noise in the
-training split, which is expected for small datasets and reinforces the need to
-rely on held-out test metrics.
+### Grad-CAM warning
 
-## Gray-Letterbox Hold-Out Training
+Legacy Simple3DLSTM visualizations showed strong responses at black letterbox
+borders. Gray padding reduced this particular response, but a changed heatmap is
+not evidence that the model learned ASD-related behavior. The corrected pipeline
+stores content masks, sets padding to zero after normalization, masks overlays,
+and traces each Grad-CAM to an exact cached clip, frame, checkpoint, model,
+layer, normalization, and target class.
 
-After the final gray-padding cache rebuild, both main models were trained on
-the corrected cached hold-out split for up to 100 epochs with early stopping.
+## Implemented Corrections
 
-| Model | Training setup | Temperature | Threshold | Test AUC | Test Acc | Test F1 | Test loss |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Simple3DLSTM | `--cached --temp --epochs 100 --patience 20` | 0.382 | 0.05 | 1.000 | 1.000 | 1.000 | 0.0026 |
-| R3D | `--cached --finetune --full_finetune --full_ft_epochs 8 --full_ft_lr 1e-5 --temp --epochs 100 --patience 20` | 0.693 | 0.05 | 1.000 | 1.000 | 1.000 | 0.0013 |
+### Privacy and metadata
 
-The `simple2dcnn` frame-level ablation was also trained with gray padding
-jitter:
+- Added `data.prepare_dataset template|validate|cache`.
+- Generated a private 108-row SHA-256 template locally: 107 readable, one
+  excluded unreadable file.
+- Revalidated all 108 full-file hashes and metadata coverage; no duplicate raw
+  SHA-256 identifiers were found.
+- Added consistency checks for subject labels, session ownership, coverage,
+  duplicates, relative paths, hashes, and minimum subjects per class.
+- Removed tracked manifests containing absolute paths and timestamps.
+- Ignored private metadata, grouped caches, predictions, fold assignments,
+  checkpoints, and runs.
+- Kept an empty committed schema in `docs/subject_metadata_schema.csv`.
 
-| Model | Training setup | Temperature | Threshold | Test AUC | Test Acc | Test F1 | Test loss |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Simple2DCNN | `--cached --temp --epochs 100 --patience 20 --pad_jitter 16` | 0.439 | 0.05 | 1.000 | 1.000 | 1.000 | 0.0003 |
+### Clip preprocessing
 
-The Conv2D result is a scientific warning: the current hold-out split can be
-solved from frame-level/static cues. It does not prove the 3D models learned
-temporal ASD behavior.
+- Five deterministic clips per video.
+- Sixteen frames per clip at 15 FPS.
+- Clip locations distributed uniformly across video duration.
+- Aspect-ratio-preserving `112x112` letterbox with gray value `128`.
+- Packed content masks and normalized-zero padding.
+- Shared crop, flip, and color jitter for every frame in one clip.
+- Cache metadata includes frame indices, hashes, FPS, duration, original
+  dimensions, content boxes, failures, and cache version.
 
-## Source-Aware Hold-Out Cache
+### Models and training
 
-A separate source-aware cache was created in `data_source_aware/`:
+- Preserved the old model as `simple3dlstm_legacy`.
+- Added compact `simple3dlstm_v2` with GroupNorm, adaptive spatial pooling,
+  128-to-64 LSTM, dropout `0.3`, and gradient clipping `1.0`.
+- Kept Simple2DCNN as a temporal-order-insensitive ablation.
+- Added explicit R3D Kinetics normalization.
+- Froze R3D BatchNorm statistics and affine parameters.
+- Added exact R3D stage budgets: 15 head, 20 layer4, 8 full backbone.
+- Selects the globally best validation-NLL checkpoint across all R3D stages.
+- Uses `BCEWithLogitsLoss`; sigmoid is applied only to convert logits to
+  probabilities for probability metrics.
+- WandB defaults to disabled and is optional/offline-safe.
 
-```powershell
-asd\Scripts\python.exe data\save_numpy_dataset.py --root C:\Users\zhams\HWs\Autsim\dataset --output_dir data_source_aware --max_frames 60 --target_size 112 112 --seed 42 --unreadable_policy exclude --pad_value 128 --split_strategy source_aware
-```
+### Subject evaluation
 
-The cache kept the original class balance and integrity guarantees:
+- Outer stratified folds operate on unique subjects and abort below three
+  subjects per class.
+- Inner validation subjects come only from the outer training fold.
+- Training samples exactly four examples per subject per epoch.
+- Predictions aggregate clips to video, video to session, and session to
+  subject.
+- Primary ROC AUC is computed directly from subject logits.
+- The decision threshold is fixed at `0.5`; no primary threshold tuning.
+- Reports PR AUC, balanced accuracy, sensitivity, specificity, precision, F1,
+  NLL, Brier, confusion matrices, and stratified subject-bootstrap intervals.
+- Temporal evaluation includes normal, reversed, shuffled, and static frames.
 
-| Split | Shape | Pos | Neg | Cross-split decoded duplicates | All-zero videos |
-| --- | --- | ---: | ---: | ---: | ---: |
-| train | `(74, 60, 112, 112, 3)` | 37 | 37 | 0 | 0 |
-| val | `(11, 60, 112, 112, 3)` | 5 | 6 | 0 | 0 |
-| test | `(22, 60, 112, 112, 3)` | 11 | 11 | 0 | 0 |
+### Reproducibility
 
-`data_source_aware/split_diagnostics.json` reports that source-aware splitting
-cannot fully solve the raw data bias:
+Each grouped run records a configuration SHA-256, configuration, environment,
+Git state, private fold assignment, normalization, history, predictions,
+metrics, checkpoints, and checkpoint SHA-256. Seeds are `42`, `43`, and `44`
+with one fixed subject-fold assignment.
 
-- `2024-08` and `2024-09` are all positive.
-- `.mp4` files are all positive.
-- July/October are mostly negative.
+## Professor Feedback Status
 
-So this split is a better audit split than a single random split, but it is not
-equivalent to subject/source-independent validation.
+| Suggestion | Status |
+|---|---|
+| Preserve aspect ratio and pad to 112 | Implemented with gray letterboxing and content masks |
+| Explain BCEWithLogitsLoss includes sigmoid + BCE | Implemented in code documentation and manuscript guidance |
+| Add full-backbone R3D stage | Implemented as 8 epochs at `1e-5` |
+| Correct questionable CV | Legacy CV disabled; true subject folds implemented, awaiting metadata |
+| Compare Conv2D | Simple2DCNN retained as an explicit ablation |
 
-## Source-Aware 50-Epoch Training
+The PDF manuscript itself has not been regenerated in this pass. Any revision
+must replace the old CV and near-perfect-result claims with the findings in this
+report.
 
-All three models were trained on `data_source_aware/` for 50 epochs with early
-stopping and validation-only threshold/temperature selection.
+## Current Execution Gate
 
-| Model | Training setup | Early stop | Temperature | Threshold | Test AUC | Test Acc | Test Precision | Test Recall | Test F1 | Test loss |
-| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Simple2DCNN | `--cached --data_path data_source_aware --temp --epochs 50 --patience 10 --pad_jitter 16` | No | 0.488 | 0.55 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.0053 |
-| Simple3DLSTM | `--cached --data_path data_source_aware --temp --epochs 50 --patience 10 --pad_jitter 16` | No | 0.002 | 0.05 | 0.955 | 0.955 | 1.000 | 0.909 | 0.952 | 5.4924 |
-| R3D | `--cached --data_path data_source_aware --finetune --temp --epochs 50 --patience 10 --pad_jitter 16` | Yes, during fine-tune stage at epoch 17/25 | 0.546 | 0.05 | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 | 0.0594 |
+The private template intentionally has blank `subject_id` and `session_id`
+fields. Strict validation therefore fails, as it should. No grouped clip cache,
+perceptual cross-subject audit, Grad-CAM from grouped checkpoints, permutation
+suite, or deep subject benchmark may run until the mapping is manually completed
+and validated.
 
-The near-zero Simple3DLSTM temperature is a calibration warning. Its ranking
-remained strong, but its calibrated probabilities should not be interpreted as
-reliable.
+## Verification Completed
 
-## Shortcut Baseline Audit
+- The earlier suite ran `63` tests: `62` passed and one legacy-manifest test was intentionally
+  skipped because that sensitive file was removed.
+- All `61` project Python files passed AST parsing and import checks.
+- One-batch backward/optimizer smoke tests passed for Simple2DCNN,
+  Simple3DLSTM v2, and R3D.
+- A synthetic end-to-end subject-grouped run produced normalization, history,
+  checkpoint, checkpoint hash, predictions, and metrics artifacts.
+- All CLI smoke tests passed.
+- `pip check` reported no broken requirements.
+- `git diff --check` reported no whitespace errors.
+- The private template passed coverage and full SHA-256 validation in
+  incomplete mode, then correctly failed the strict identity gate.
 
-To probe why the deep models are so high, a non-neural shortcut audit was added
-in `experiments/shortcut_baselines.py`. The script trains only fixed, simple
-baselines on the current train split and reports validation/test metrics.
+Once the gate passes, run in this order:
 
-| Baseline | Val AUC | Test AUC | Test Acc | Test F1 | Interpretation |
-| --- | ---: | ---: | ---: | ---: | --- |
-| Majority prior | 0.500 | 0.500 | 0.500 | 0.667 | Expected chance-style baseline |
-| Global color/brightness/padding stats | 0.800 | 0.967 | 0.955 | 0.952 | Low-level visual statistics are highly predictive |
-| Frame-difference motion stats | 0.967 | 1.000 | 0.955 | 0.952 | Coarse motion/recording differences are highly predictive |
-| Tiny static thumbnails | 0.967 | 1.000 | 0.955 | 0.952 | Static frame/background/framing cues are highly predictive |
-| Path suffix/date tokens | 0.500 | 0.545 | 0.545 | 0.167 | Near chance after excluding label-folder names |
+1. Build `data_grouped/`.
+2. Run cache integrity and perceptual near-duplicate review.
+3. Run `run_subject_benchmark` for all folds, models, and three seeds.
+4. Run grouped permutation controls.
+5. Review temporal ablations and target-specific Grad-CAM.
+6. Report internal subject-grouped estimates with confidence intervals.
 
-This result is a major blind spot. The current split can be classified almost
-perfectly without a video deep-learning model. The next validity step should be
-subject/source/session-aware splitting or an external test set.
+## Claim Boundary
 
-On the source-aware cache, shortcut baselines remained strong:
+The current evidence supports this statement:
 
-| Baseline | Val AUC | Test AUC | Test Acc | Test F1 |
-| --- | ---: | ---: | ---: | ---: |
-| Majority prior | 0.500 | 0.500 | 0.500 | 0.667 |
-| Global color/brightness/padding stats | 0.867 | 0.901 | 0.864 | 0.870 |
-| Frame-difference motion stats | 1.000 | 1.000 | 0.955 | 0.952 |
-| Tiny static thumbnails | 1.000 | 0.967 | 0.955 | 0.957 |
-| Path suffix/date tokens | 0.500 | 0.591 | 0.591 | 0.308 |
+> Legacy holdout performance is confounded by collection artifacts, with simple
+> motion features achieving capture-date-grouped OOF ROC AUC 0.957. A corrected
+> subject-grouped pipeline is implemented, but valid deep estimates await manual
+> subject/session mapping.
 
-This means the source-aware split did not remove shortcut predictability.
-
-## Feature Distribution Audit
-
-`experiments/feature_distribution_audit.py` was added to identify which simple
-signals differ by class.
-
-Top class differences:
-
-- Positive videos have much larger frame-difference values. On the test split,
-  `diff_p99` has Cohen's d `3.449` and `diff_std` has Cohen's d `2.213`.
-- Negative videos are brighter and have higher green/blue channel means. On the
-  test split, `mean_g` has Cohen's d `-1.644`, `mean_b` has Cohen's d `-1.548`,
-  and `brightness_mean` has Cohen's d `-1.289`.
-- Capture month is confounded with label. In the current manifest,
-  August/September videos are almost entirely positive, while July/October
-  videos are mostly negative.
-- All `.mp4` files in the current manifest are positive.
-
-These findings are consistent with visual/source shortcuts, not necessarily
-behavioral ASD features.
-
-## Best-Practice Tuning Strategy
-
-- Keep an untouched final test set. Do not use it for model choice,
-  threshold choice, temperature scaling, epoch count, or architecture choice.
-- Use validation loss for early stopping and validation metrics for threshold
-  selection. Report AUC as the primary threshold-free metric.
-- For hyperparameter tuning, use a small predefined grid and choose only on the
-  validation set, or use nested/grouped CV when the dataset is large enough.
-- Prefer source/subject/session grouped splits over random file-level splits.
-- Run shortcut baselines before trusting deep models. If a simple baseline is
-  strong, treat high neural scores as suspect until the split is strengthened.
-- Report calibration cautiously on this dataset because the validation set is
-  small.
-- See `docs/EvaluationProtocol.md` for the full project tuning and reporting
-  standard.
-
-## Remaining Limitations
-
-- Current verified claims should be limited to the fixed hold-out split.
-- True GroupKFold CV still requires raw subject metadata or fold-specific cached
-  splits and should be implemented/rerun before claiming group CV results.
-- Subject-level independence cannot be proven from the current `.npz` files
-  alone because the cache does not include subject IDs.
-- Aspect-ratio-preserving resize is now implemented in both raw-video loading
-  and cache generation. Gray padding is now preferred over black padding
-  because black borders appeared as salient Grad-CAM regions in some
-  Simple3DLSTM examples.
-- R3D now supports a third transfer-learning stage with
-  `--finetune --full_finetune`, which unfreezes the full backbone at a lower
-  learning rate.
-- Grad-CAM dashboard generation is available through
-  `python -m tools.gradcam_dashboard`; use it after retraining on the current
-  preprocessing to interpret final checkpoints.
-- A `simple2dcnn` frame-level ablation was added. It also reached perfect
-  hold-out performance on the current split, which means static frame,
-  recording, background, or subject/source cues may be sufficient for this
-  dataset. Treat this as a warning against claiming the models necessarily
-  learned temporal ASD behavior without subject-level or external validation.
-
-## Verification Commands
-
-All verification used `asd\Scripts\python.exe`.
-
-- AST parse check for all project Python files: passed.
-- `python train.py --help`: passed.
-- `python data\save_numpy_dataset.py --help`: passed.
-- `python -m experiments.debug_shuffle_labels --help`: passed.
-- `python train.py --model r3d --cached --cv`: failed fast as intended.
-- `python -m experiments.shortcut_baselines`: passed and wrote
-  `experiments/shortcut_baselines_results.json`.
-- `python -m experiments.feature_distribution_audit`: passed and wrote
-  `experiments/feature_distribution_audit_results.json`.
-- `python -m experiments.shortcut_baselines --data_dir data_source_aware`: passed
-  and wrote `experiments/shortcut_baselines_source_aware_results.json`.
-- `python -m experiments.feature_distribution_audit --data_dir data_source_aware`:
-  passed and wrote `experiments/feature_distribution_source_aware_results.json`.
-- `python train.py --model simple2dcnn --cached --data_path data_source_aware ...`:
-  passed for 50 epochs.
-- `python train.py --model simple3dlstm --cached --data_path data_source_aware ...`:
-  passed for 50 epochs.
-- `python train.py --model r3d --cached --data_path data_source_aware --finetune ...`:
-  passed with early stopping in the fine-tuning stage.
-- Cached split duplicate/all-zero check after rebuild: passed with no all-zero
-  videos and no exact decoded duplicates across train/val/test.
-- `python -m unittest discover -s tests -v`: passed, 23 tests.
+It does **not** support claims of perfect ASD classification, validated five-fold
+CV, external generalization, clinical screening accuracy, or learned behavioral
+biomarkers.
